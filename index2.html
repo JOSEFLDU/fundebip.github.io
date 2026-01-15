@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FUNDEBIP - Fundación para el Desarrollo y Bienestar del Policía</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-plomo: #4A4A4A;
+            --color-plomo-claro: #F5F5F5;
+            --color-plomo-medio: #9E9E9E;
+            --color-rojo: #D32F2F;
+            --color-rojo-oscuro: #B71C1C;
+            --color-blanco: #FFFFFF;
+            --color-texto: #333333;
+            --sombra: 0 5px 15px rgba(0, 0, 0, 0.08);
+            --transicion: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Open Sans', sans-serif;
+            color: var(--color-texto);
+            background-color: var(--color-plomo-claro);
+            line-height: 1.6;
+        }
+        
+        h1, h2, h3, h4 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            color: var(--color-plomo);
+            margin-bottom: 1rem;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            color: var(--color-rojo);
+            position: relative;
+            padding-bottom: 10px;
+        }
+        
+        h1:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 60px;
+            height: 4px;
+            background-color: var(--color-rojo);
+        }
+        
+        h2 {
+            font-size: 2rem;
+            margin-top: 2rem;
+        }
+        
+        h3 {
+            font-size: 1.5rem;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header y Navegación */
+        header {
+            background-color: var(--color-plomo);
+            box-shadow: var(--sombra);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+        
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo {
+            height: 70px;
+            width: auto;
+            filter: brightness(0) invert(1);
+        }
+        
+        .logo-text h2 {
+            color: var(--color-blanco);
+            margin-bottom: 5px;
+            font-size: 1.6rem;
+        }
+        
+        .logo-text p {
+            color: var(--color-plomo-medio);
+            font-size: 0.9rem;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+        }
+        
+        nav a {
+            color: var(--color-blanco);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1rem;
+            transition: var(--transicion);
+            padding: 5px 0;
+            position: relative;
+        }
+        
+        nav a:hover, nav a.active {
+            color: var(--color-rojo);
+        }
+        
+        nav a.active:after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--color-rojo);
+        }
+        
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--color-blanco);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        /* Sección Hero */
+        .hero {
+            background: linear-gradient(rgba(74, 74, 74, 0.9), rgba(74, 74, 74, 0.9)), url('https://images.unsplash.com/photo-1551135049-8a33b2c3c8c3?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80');
+            background-size: cover;
+            background-position: center;
+            color: var(--color-blanco);
+            padding: 80px 0;
+            text-align: center;
+        }
+        
+        .hero h1 {
+            color: var(--color-blanco);
+            margin-bottom: 20px;
+        }
+        
+        .hero h1:after {
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--color-rojo);
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin: 0 auto 30px;
+        }
+        
+        /* Sección principal */
+        .main-content {
+            padding: 60px 0;
+            background-color: var(--color-blanco);
+        }
+        
+        /* Grid de enlaces */
+        .links-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 60px;
+        }
+        
+        .link-card {
+            background-color: var(--color-blanco);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--sombra);
+            transition: var(--transicion);
+            border: 1px solid #eee;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .link-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+        
+        .link-card-header {
+            background-color: var(--color-plomo);
+            color: var(--color-blanco);
+            padding: 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        
+        .link-card-header i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: var(--color-rojo);
+        }
+        
+        .link-card-body {
+            padding: 25px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .link-card-body p {
+            margin-bottom: 20px;
+            color: var(--color-plomo);
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: var(--color-rojo);
+            color: var(--color-blanco);
+            padding: 12px 25px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transicion);
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            text-align: center;
+            margin-top: auto;
+        }
+        
+        .btn:hover {
+            background-color: var(--color-rojo-oscuro);
+            transform: translateY(-2px);
+        }
+        
+        /* Sección de imágenes */
+        .images-section {
+            margin-bottom: 60px;
+        }
+        
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .image-card {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--sombra);
+            background-color: var(--color-blanco);
+        }
+        
+        .image-card img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            display: block;
+        }
+        
+        .image-card-content {
+            padding: 20px;
+        }
+        
+        .image-card-content h3 {
+            color: var(--color-rojo);
+            margin-bottom: 10px;
+        }
+        
+        /* Dashboard y videos alternados */
+        .alternating-section {
+            margin-bottom: 60px;
+        }
+        
+        .alternating-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 50px;
+            background-color: var(--color-plomo-claro);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: var(--sombra);
+        }
+        
+        .alternating-item:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+        
+        .dashboard-container, .alternating-video-container {
+            flex: 1;
+            height: 400px;
+            position: relative;
+        }
+        
+        .dashboard-container iframe, .alternating-video-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .alternating-content {
+            flex: 1;
+            padding: 40px;
+        }
+        
+        .alternating-content h3 {
+            color: var(--color-rojo);
+        }
+        
+        /* Footer */
+        footer {
+            background-color: var(--color-plomo);
+            color: var(--color-blanco);
+            padding: 50px 0 20px;
+        }
+        
+        .footer-content {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin-bottom: 40px;
+        }
+        
+        .footer-column {
+            flex: 1;
+            min-width: 250px;
+            margin-bottom: 30px;
+        }
+        
+        .footer-column h3 {
+            color: var(--color-blanco);
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            position: relative;
+            padding-bottom: 10px;
+        }
+        
+        .footer-column h3:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 40px;
+            height: 3px;
+            background-color: var(--color-rojo);
+        }
+        
+        .footer-column p, .footer-column a {
+            color: var(--color-plomo-medio);
+            margin-bottom: 10px;
+            display: block;
+            text-decoration: none;
+            transition: var(--transicion);
+        }
+        
+        .footer-column a:hover {
+            color: var(--color-rojo);
+        }
+        
+        .copyright {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--color-plomo-medio);
+            font-size: 0.9rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 992px) {
+            .alternating-item {
+                flex-direction: column;
+            }
+            
+            .alternating-item:nth-child(even) {
+                flex-direction: column;
+            }
+            
+            .dashboard-container, .alternating-video-container {
+                width: 100%;
+                height: 350px;
+            }
+            
+            .alternating-content {
+                width: 100%;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                padding: 15px 0;
+            }
+            
+            .logo-container {
+                margin-bottom: 15px;
+            }
+            
+            nav ul {
+                display: none;
+                flex-direction: column;
+                width: 100%;
+                text-align: center;
+                gap: 15px;
+                margin-top: 20px;
+            }
+            
+            nav ul.active {
+                display: flex;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+                position: absolute;
+                top: 25px;
+                right: 20px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            h2 {
+                font-size: 1.7rem;
+            }
+            
+            .links-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .hero {
+                padding: 50px 0;
+            }
+        }
+        
+        /* Modal para maximizar */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            width: 90%;
+            max-width: 1000px;
+            height: 80%;
+            background-color: var(--color-blanco);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .modal-content iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            color: var(--color-blanco);
+            font-size: 2rem;
+            cursor: pointer;
+            z-index: 2001;
+            background-color: rgba(0, 0, 0, 0.5);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: var(--transicion);
+        }
+        
+        .close-modal:hover {
+            background-color: var(--color-rojo);
+        }
+        
+        .maximize-btn {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            background-color: var(--color-rojo);
+            color: var(--color-blanco);
+            border: none;
+            border-radius: 4px;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: var(--transicion);
+            z-index: 10;
+        }
+        
+        .maximize-btn:hover {
+            background-color: var(--color-rojo-oscuro);
+        }
+        
+        /* Miniaturas de dashboard */
+        .dashboard-miniature {
+            height: 200px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            position: relative;
+            background-color: #f0f0f0;
+        }
+        
+        .dashboard-miniature iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            pointer-events: none;
+            transform: scale(0.5);
+            transform-origin: top left;
+        }
+        
+        .dashboard-miniature-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: var(--transicion);
+        }
+        
+        .dashboard-miniature:hover .dashboard-miniature-overlay {
+            opacity: 1;
+        }
+        
+        .preview-text {
+            background-color: var(--color-rojo);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container header-content">
+            <div class="logo-container">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Ecuador_Police_insignia.svg/1200px-Ecuador_Police_insignia.svg.png" alt="Logo FUNDEBIP" class="logo">
+                <div class="logo-text">
+                    <h2>FUNDEBIP</h2>
+                    <p>Fundación para el Desarrollo y Bienestar del Policía</p>
+                </div>
+            </div>
+            
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <nav>
+                <ul id="mainMenu">
+                    <li><a href="#inicio" class="active">Inicio</a></li>
+                    <li><a href="#liderazgo">Liderazgo</a></li>
+                    <li><a href="#dashboards">Dashboards</a></li>
+                    <li><a href="#videos">Videos</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Sección Hero -->
+    <section class="hero" id="inicio">
+        <div class="container">
+            <h1>FUNDEBIP</h1>
+            <p>Fundación para el Desarrollo y Bienestar del Policía y su Familia. Es una entidad de apoyo social que trabaja de manera articulada con la Policía Nacional del Ecuador, con el objetivo de mejorar la calidad de vida de los servidores policiales y de sus familias, especialmente en situaciones de vulnerabilidad.</p>
+        </div>
+    </section>
+
+    <!-- Contenido Principal -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Sección de Liderazgo Institucional -->
+            <section id="liderazgo">
+                <h2>Liderazgo Institucional</h2>
+                
+                <div class="images-grid">
+                    <div class="image-card">
+                        <img src="https://images.unsplash.com/photo-1582750433449-648ed127bb54?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Presidenta Actual">
+                        <div class="image-card-content">
+                            <h3>Presidenta Actual</h3>
+                            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="image-card">
+                        <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Presidenta Anterior">
+                        <div class="image-card-content">
+                            <h3>Presidenta Anterior</h3>
+                            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="image-card">
+                        <img src="https://images.unsplash.com/photo-1551836026-d5c2c5af78e4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Distinguido Directorio">
+                        <div class="image-card-content">
+                            <h3>Distinguido Directorio</h3>
+                            <p>El directorio de FUNDEBIP está conformado por profesionales comprometidos con el bienestar de los servidores policiales y sus familias.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="image-card">
+                        <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" alt="Organigrama FUNDEBIP">
+                        <div class="image-card-content">
+                            <h3>Organigrama Institucional</h3>
+                            <p>El organigrama de FUNDEBIP muestra la estructura de enlaces y departamentos que trabajan coordinadamente para cumplir con los objetivos de la fundación.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Grid de 6 dashboards de Looker Studio -->
+            <section id="dashboards">
+                <h2>Dashboards de Gestión</h2>
+                <div class="links-grid">
+                    <div class="link-card">
+                        <div class="link-card-header">
+                            <i class="fas fa-hands-helping"></i>
+                            <h3>Trabajo Social</h3>
+                        </div>
+                        <div class="link-card-body">
+                            <div class="dashboard-miniature">
+                                <iframe src="https://lookerstudio.google.com/embed/reporting/43b93834-2f40-4050-ad43-51a6c1c510ee/page/p_yic4eo3rzd" frameborder="0" style="border:0" allowfullscreen></iframe>
+                                <div class="dashboard-miniature-overlay">
+                                    <div class="preview-text">Vista Previa</div>
+                                </div>
+                            </div>
+                            <p>Seguimiento de programas de apoyo social, asistencia familiar y atención a casos especiales de vulnerabilidad.</p>
+                            <button class="btn maximize-btn" data-dashboard="https://lookerstudio.google.com/embed/reporting/43b93834-2f40-4050-ad43-51a6c1c510ee/page/p_yic4eo3rzd">Ver Dashboard Completo</button>
+                        </div>
+                    </div>
+                    
+                    <div class="link-card">
+                        <div class="link-card-header">
+                            <i class="fas fa-building"></i>
+                            <h3>Espacios Físicos</h3>
+                        </div>
+                        <div class="link-card-body">
+                            <div class="dashboard-miniature">
+                                <iframe src="https://lookerstudio.google.com/embed/reporting/43b93834-2f40-4050-ad43-51a6c1c510ee/page/p_yic4eo3rzd" frameborder="0" style="border:0" allowfullscreen></iframe>
+                                <div class="dashboard-miniature-overlay">
+                                    <div class="preview-text">Vista Previa</div>
+                                </div>
+                            </div>
+                            <p>Gestión y mantenimiento de las instalaciones e infraestructura disponible para los beneficiarios.</p>
+                            <button class="btn maximize-btn" data-dashboard="https://lookerstudio.google.com/embed/reporting/43b93834-2f40-4050-ad43-51a6c1c510ee/page/p_yic4eo3rzd">Ver Dashboard Completo</button>
+                        </div>
+                    </div>
+                    
+                    <div class="link-card">
+                        <div class="link-card-header">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <h3>Ingresos</h3>
+                        </div>
+                        <div class="link-card-body">
+                            <div class="dashboard-miniature">
+                                <iframe src="https://lookerstudio.google.com/embed/reporting/43b93834-2f40-4050-ad43-51a6c1c510ee/page/p_yic4eo3rzd" frameborder="0" style="border:0" allowfullscreen></iframe>
+                                <div class="dashboard-miniature-overlay">
+                                    <div class="preview-text">Vista Previa</div>
+                                </div>
+                            </div>
+                            <p>Control y análisis de las fuentes de financiamiento, donaciones y recursos económicos de la fundación.</p>
+                            <button class="btn maximize-btn" data-dashboard="https://lookerstudio.google.com/embed/reporting/43b93834-2f40-4050-ad43-51a6c1c510ee/page/p_yic4eo3rzd">Ver Dashboard Completo</button>
+                        </div>
+                    </div>
+                    
+                    <div class="link-card">
+                        <div class="link-card-header">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                            <h3>Gastos</h3>
+                        </div>
+                        <div class="link-card-body">
+                            <div class="dashboard-miniature">
+                                <iframe src="https://lookerstudio.google.com/embed/reporting/43b93834-2f40-4050-ad43-51a6c1c510ee/page/p_yic4eo3rzd" frameborder="0" style="border:0" allowfullscreen></iframe>
+                                <div class="dashboard-miniature-overlay">
+                                    <div class="preview-text">Vista Previa</div>
+                                </div>
+                            </div>
+                            <p>Monitoreo de los desembolsos, egresos y aplicación de recursos en los diferentes programas.</p>
+                            <button class="btn maximize-btn" data-dashboard="https://lookerstudio.google.com/embed/reporting/43b93834-2f40-4050-ad43-51a6c1c510ee/page/p_yic4eo3rzd">Ver Dashboard Completo</button>
+                        </div>
+                    </div>
+                    
+                    <div class="link-card">
+                        <div class="link-card-header">
+                            <i class="fas fa-chart-line"></i>
+                            <h3>Planificación</h3>
+                        </div>
+                        <div class="link-card-body">
+                            <div class="dashboard-miniature">
+                                <iframe src="https://lookerstudio.google.com/embed/reporting/43b93834-2f40-4050-ad43-51a6c1c510ee/page/p_yic4eo3rzd" frameborder="0" style="border:0" allowfullscreen></iframe>
+                                <div class="dashboard-miniature-overlay">
+                                    <div class="preview-text">Vista Previa</div>
+                                </div>
+                            </div>
+                            <p>Proyecciones, metas y seguimiento a los objetivos estratégicos de la fundación.</p>
+                            <button class="btn maximize-btn" data-dashboard="https://lookerstudio.google.com/embed/reporting/43b93834-2f40-4050-ad43-51a6c1c510ee/page/p_yic4eo3rzd">Ver Dashboard Completo</button>
+                        </div>
+                    </div>
+                    
+                    <div class="link-card">
+                        <div class="link-card-header">
+                            <i class="fas fa-warehouse"></i>
+                            <h3>Bodega</h3>
+                        </div>
+                        <div class="link-card-body">
+                            <div class="dashboard-miniature">
+                                <iframe src="https://lookerstudio.google.com/embed/reporting/43b93834-2f40-4050-ad43-51a6c1c510ee/page/p_yic4eo3rzd" frameborder="0" style="border:0" allowfullscreen></iframe>
+                                <div class="dashboard-miniature-overlay">
+                                    <div class="preview-text">Vista Previa</div>
+                                </div>
+                            </div>
+                            <p>Gestión de inventario, almacenamiento y distribución de recursos materiales.</p>
+                            <button class="btn maximize-btn" data-dashboard="https://lookerstudio.google.com/embed/reporting/43b93834-2f40-4050-ad43-51a6c1c510ee/page/p_yic4eo3rzd">Ver Dashboard Completo</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Sección alternada de 3 videos -->
+            <section class="alternating-section" id="videos">
+                <h2>Videos Institucionales</h2>
+                
+                <div class="alternating-item">
+                    <div class="alternating-video-container">
+                        <iframe src="https://drive.google.com/file/d/1BJq6g2o4KdvVgn7XIyN8X9gI_Su4XyG5/preview" allow="autoplay" allowfullscreen></iframe>
+                        <button class="maximize-btn" data-video="https://drive.google.com/file/d/1BJq6g2o4KdvVgn7XIyN8X9gI_Su4XyG5/preview">Maximizar</button>
+                    </div>
+                    <div class="alternating-content">
+                        <h3>Video Institucional 1</h3>
+                        <p>Presentación de los programas sociales más importantes de FUNDEBIP, destacando las historias de vida de los beneficiarios y el impacto positivo en la comunidad policial.</p>
+                    </div>
+                </div>
+                
+                <div class="alternating-item">
+                    <div class="alternating-video-container">
+                        <iframe src="https://drive.google.com/file/d/1BJq6g2o4KdvVgn7XIyN8X9gI_Su4XyG5/preview" allow="autoplay" allowfullscreen></iframe>
+                        <button class="maximize-btn" data-video="https://drive.google.com/file/d/1BJq6g2o4KdvVgn7XIyN8X9gI_Su4XyG5/preview">Maximizar</button>
+                    </div>
+                    <div class="alternating-content">
+                        <h3>Video Institucional 2</h3>
+                        <p>Reportaje sobre la inauguración de nuevas instalaciones para la atención de los beneficiarios, con testimonios de los servidores policiales y sus familias.</p>
+                    </div>
+                </div>
+                
+                <div class="alternating-item">
+                    <div class="alternating-video-container">
+                        <iframe src="https://drive.google.com/file/d/1BJq6g2o4KdvVgn7XIyN8X9gI_Su4XyG5/preview" allow="autoplay" allowfullscreen></iframe>
+                        <button class="maximize-btn" data-video="https://drive.google.com/file/d/1BJq6g2o4KdvVgn7XIyN8X9gI_Su4XyG5/preview">Maximizar</button>
+                    </div>
+                    <div class="alternating-content">
+                        <h3>Video Institucional 3</h3>
+                        <p>Documental sobre el impacto de los programas de bienestar social en la calidad de vida de las familias de los servidores policiales en situaciones de vulnerabilidad.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>FUNDEBIP</h3>
+                    <p>Fundación para el Desarrollo y Bienestar del Policía y su Familia.</p>
+                    <p>Trabajando por el bienestar de los servidores policiales y sus familias desde 1995.</p>
+                </div>
+                
+                <div class="footer-column">
+                    <h3>Enlaces Rápidos</h3>
+                    <a href="#inicio">Inicio</a>
+                    <a href="#liderazgo">Liderazgo</a>
+                    <a href="#dashboards">Dashboards</a>
+                    <a href="#videos">Videos</a>
+                </div>
+                
+                <div class="footer-column">
+                    <h3>Contacto</h3>
+                    <p><i class="fas fa-map-marker-alt"></i> Av. Amazonas NXX-XX y XX, Quito - Ecuador</p>
+                    <p><i class="fas fa-phone"></i> (02) 123-4567</p>
+                    <p><i class="fas fa-envelope"></i> info@fundebip.gob.ec</p>
+                </div>
+                
+                <div class="footer-column">
+                    <h3>Dashboards</h3>
+                    <a href="#dashboards">Trabajo Social</a>
+                    <a href="#dashboards">Espacios Físicos</a>
+                    <a href="#dashboards">Ingresos</a>
+                    <a href="#dashboards">Gastos</a>
+                    <a href="#dashboards">Planificación</a>
+                    <a href="#dashboards">Bodega</a>
+                </div>
+            </div>
+            
+            <div class="copyright">
+                <p>&copy; 2023 FUNDEBIP. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal para maximizar contenido -->
+    <div class="modal" id="modal">
+        <div class="close-modal" id="closeModal">&times;</div>
+        <div class="modal-content">
+            <iframe id="modalIframe" src="" frameborder="0" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <script>
+        // Menú móvil
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mainMenu = document.getElementById('mainMenu');
+        
+        mobileMenuBtn.addEventListener('click', () => {
+            mainMenu.classList.toggle('active');
+            mobileMenuBtn.innerHTML = mainMenu.classList.contains('active') 
+                ? '<i class="fas fa-times"></i>' 
+                : '<i class="fas fa-bars"></i>';
+        });
+        
+        // Cerrar menú al hacer clic en un enlace
+        document.querySelectorAll('nav a').forEach(link => {
+            link.addEventListener('click', () => {
+                mainMenu.classList.remove('active');
+                mobileMenuBtn.innerHTML = '<i class="fas fa-bars"></i>';
+            });
+        });
+        
+        // Navegación suave
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const targetId = this.getAttribute('href');
+                if(targetId === '#') return;
+                
+                const targetElement = document.querySelector(targetId);
+                if(targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+        
+        // Modal para maximizar
+        const modal = document.getElementById('modal');
+        const modalIframe = document.getElementById('modalIframe');
+        const closeModal = document.getElementById('closeModal');
+        const maximizeBtns = document.querySelectorAll('.maximize-btn');
+        
+        maximizeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Verificar si es un dashboard o un video
+                if (btn.hasAttribute('data-dashboard')) {
+                    const dashboardUrl = btn.getAttribute('data-dashboard');
+                    modalIframe.src = dashboardUrl;
+                } else if (btn.hasAttribute('data-video')) {
+                    const videoUrl = btn.getAttribute('data-video');
+                    modalIframe.src = videoUrl;
+                }
+                
+                modal.style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            });
+        });
+        
+        closeModal.addEventListener('click', () => {
+            modal.style.display = 'none';
+            modalIframe.src = '';
+            document.body.style.overflow = 'auto';
+        });
+        
+        // Cerrar modal al hacer clic fuera del contenido
+        modal.addEventListener('click', (e) => {
+            if(e.target === modal) {
+                modal.style.display = 'none';
+                modalIframe.src = '';
+                document.body.style.overflow = 'auto';
+            }
+        });
+        
+        // Actualizar enlace activo al hacer scroll
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('section[id]');
+            const scrollPosition = window.scrollY + 100;
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                const sectionId = section.getAttribute('id');
+                
+                if(scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+                    document.querySelectorAll('nav a').forEach(link => {
+                        link.classList.remove('active');
+                        if(link.getAttribute('href') === `#${sectionId}`) {
+                            link.classList.add('active');
+                        }
+                    });
+                }
+            });
+        });
+        
+        // Ajustar iframes de vista previa para que muestren contenido
+        document.addEventListener('DOMContentLoaded', function() {
+            const iframes = document.querySelectorAll('.dashboard-miniature iframe');
+            iframes.forEach(iframe => {
+                // Asegurar que los iframes se carguen correctamente
+                iframe.onload = function() {
+                    // Ajustar el tamaño para mostrar una vista previa
+                    this.style.width = '200%';
+                    this.style.height = '400px';
+                };
+            });
+        });
+    </script>
+</body>
+</html>
