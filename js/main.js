@@ -189,6 +189,13 @@ const albums = {
     "img/eventos/manifestaciones.jpeg",
     "img/eventos/colada.jpeg",
     "img/eventos/navidad.jpeg"
+  ],
+  tics: [
+    "img/tics/lentes.jpeg",
+    "img/tics/entrega_kits.jpeg",
+    "img/tics/manifestaciones.jpeg",
+    "img/tics/colada.jpeg",
+    "img/tics/navidad.jpeg"
   ]
 };
 
