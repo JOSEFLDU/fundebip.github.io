@@ -191,11 +191,11 @@ const albums = {
     "img/eventos/navidad.jpeg"
   ],
   tics: [
-    "img/tics/lentes.jpeg",
-    "img/tics/entrega_kits.jpeg",
-    "img/tics/manifestaciones.jpeg",
-    "img/tics/colada.jpeg",
-    "img/tics/navidad.jpeg"
+    "img/tics/dashbord2.jpeg",
+    "img/tics/formulario.jpeg",
+    "img/tics/sistema.jpeg",
+    "img/tics/formulario.jpeg",
+    "img/tics/dashbord.jpeg"
   ]
 };
 
