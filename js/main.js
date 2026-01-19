@@ -193,9 +193,8 @@ const albums = {
   tics: [
     "img/tics/dashbord2.jpeg",
     "img/tics/formulario.jpeg",
-    "img/tics/sistema.jpeg",
-    "img/tics/formulario.jpeg",
-    "img/tics/dashbord.jpeg"
+    "img/tics/dashbord.jpeg",
+    "img/tics/sistema.jpeg"
   ]
 };
 
