@@ -1,20 +1,7 @@
 // ============================================
 // CONFIGURACIÓN INICIAL
 // ============================================
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('FUNDEBIP - Sitio web cargado correctamente');
-    
-    // Inicializar todos los módulos
-    initMobileMenu();
-    initSmoothScroll();
-    initModalSystem();
-    initCarouselSystem();
-    initScrollAnimations();
-    initActiveLinkTracking();
-    initImageLoading();
-    initHeaderEffects();
-    initDynamicContent();
-});
+
 
 // ============================================
 // MENÚ MÓVIL
@@ -201,6 +188,9 @@ function initModalSystem() {
 // ============================================
 // SISTEMA DE CARRUSEL
 // ============================================
+// ============================================
+// SISTEMA DE CARRUSEL (VERSIÓN CORREGIDA)
+// ============================================
 function initCarouselSystem() {
     // Álbumes de imágenes
     const albums = {
@@ -216,13 +206,13 @@ function initCarouselSystem() {
             "img/carr1/caballos.jpeg"
         ],
         autogestion: [
+            "img/eventos/lentes.jpeg",
             "img/autoges/medicina.jpeg",
             "img/autoges/medicina2.jpeg",
             "img/autoges/medicina4.jpeg",
             "img/autoges/amplificador.jpeg"
         ],
         eventos: [
-            "img/eventos/lentes.jpeg",
             "img/eventos/entrega_kits.jpeg",
             "img/eventos/manifestaciones.jpeg",
             "img/eventos/colada.jpeg",
@@ -240,12 +230,139 @@ function initCarouselSystem() {
     const closeCarouselModal = document.getElementById('closeCarouselModal');
     const currentSlide = document.getElementById('currentSlide');
     const totalSlides = document.getElementById('totalSlides');
+    const fullscreenBtn = document.getElementById('carouselFullscreenBtn');
     
     if (!carouselModal) return;
     
     let currentAlbum = null;
     let currentIndex = 0;
     let isTransitioning = false;
+    let isFullscreen = false;
+    
+    // FUNCIÓN: Resetear carrusel a primera imagen
+    function resetToFirstImage() {
+        console.log('🔁 Reseteando a primera imagen...');
+        
+        // 1. Ir a la primera imagen
+        currentIndex = 0;
+        
+        // 2. Resetear posición del track
+        if (carouselTrack) {
+            carouselTrack.style.transition = 'none'; // Sin animación
+            carouselTrack.style.transform = 'translateX(0)';
+            
+            // Forzar reflow para aplicar cambios inmediatos
+            carouselTrack.offsetHeight;
+            
+            // Restaurar transición después de 10ms
+            setTimeout(() => {
+                carouselTrack.style.transition = '';
+            }, 10);
+        }
+        
+        // 3. Resetear dots
+        if (carouselDots) {
+            const dots = carouselDots.querySelectorAll('.carousel-dot');
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === 0);
+            });
+        }
+        
+        // 4. Resetear contador
+        if (currentSlide) currentSlide.textContent = '1';
+        
+        // 5. Resetear slides activos
+        document.querySelectorAll('.carousel-slide').forEach((slide, index) => {
+            slide.classList.toggle('active', index === 0);
+        });
+        
+        console.log('✅ Reset completado - Índice actual:', currentIndex);
+    }
+    
+    // FUNCIÓN: Salir de pantalla completa
+    function exitFullscreen() {
+        if (!isFullscreen) return;
+        
+        console.log('📱 Saliendo de pantalla completa...');
+        isFullscreen = false;
+        carouselModal.classList.remove('fullscreen');
+        
+        if (fullscreenBtn) {
+            const icon = fullscreenBtn.querySelector('i');
+            if (icon) {
+                icon.className = 'fas fa-expand';
+            }
+            fullscreenBtn.classList.remove('active');
+            fullscreenBtn.title = 'Pantalla completa';
+        }
+        
+        // Restaurar estilos originales del modal
+        carouselModal.style.padding = '';
+        const content = document.querySelector('.carousel-content');
+        if (content) {
+            content.style.cssText = '';
+            content.style.width = '90vw';
+            content.style.maxWidth = '1200px';
+            content.style.height = '90vh';
+            content.style.borderRadius = 'var(--radio-lg)';
+        }
+        
+        // Forzar redibujado
+        carouselModal.offsetHeight;
+        
+        // Resetear a primera imagen después de salir de pantalla completa
+        setTimeout(resetToFirstImage, 50);
+    }
+    
+    // FUNCIÓN: Entrar en pantalla completa
+    function enterFullscreen() {
+        if (isFullscreen) return;
+        
+        console.log('🖥️ Entrando en pantalla completa...');
+        isFullscreen = true;
+        carouselModal.classList.add('fullscreen');
+        
+        if (fullscreenBtn) {
+            const icon = fullscreenBtn.querySelector('i');
+            if (icon) {
+                icon.className = 'fas fa-compress';
+            }
+            fullscreenBtn.classList.add('active');
+            fullscreenBtn.title = 'Salir de pantalla completa';
+        }
+        
+        // Ajustar modal para pantalla completa
+        carouselModal.style.padding = '0';
+        const content = document.querySelector('.carousel-content');
+        if (content) {
+            content.style.cssText = `
+                width: 100vw !important;
+                height: 100vh !important;
+                max-width: 100vw !important;
+                max-height: 100vh !important;
+                border-radius: 0 !important;
+                background: #000;
+            `;
+        }
+        
+        // Forzar redibujado
+        carouselModal.offsetHeight;
+        
+        // Asegurar que la imagen actual se vea bien
+        setTimeout(() => {
+            updateCarouselPosition();
+            resetToFirstImage();
+        }, 100);
+    }
+    
+    // FUNCIÓN: Alternar pantalla completa
+    function toggleFullscreen() {
+        if (isFullscreen) {
+            exitFullscreen();
+        } else {
+            enterFullscreen();
+        }
+    }
     
     // Configurar botones que abren carruseles
     document.querySelectorAll('[data-album]').forEach(btn => {
@@ -262,8 +379,15 @@ function initCarouselSystem() {
     
     // Abrir carrusel
     function openCarousel(albumName) {
+        console.log('🎬 Abriendo carrusel:', albumName);
+        
+        // 1. SIEMPRE salir de pantalla completa primero
+        exitFullscreen();
+        
+        // 2. Resetear variables
         currentAlbum = albums[albumName];
         currentIndex = 0;
+        isFullscreen = false;
         
         // Configurar título
         const albumTitles = {
@@ -283,12 +407,18 @@ function initCarouselSystem() {
         currentAlbum.forEach((imgSrc, index) => {
             const slide = document.createElement('div');
             slide.className = 'carousel-slide';
-            slide.innerHTML = `
-                <img src="${imgSrc}" 
-                     alt="Imagen ${index + 1}" 
-                     loading="lazy"
-                     onerror="this.onerror=null; this.src='https://via.placeholder.com/800x600?text=Imagen+no+disponible'">
-            `;
+            if (index === 0) slide.classList.add('active');
+            
+            const img = document.createElement('img');
+            img.src = imgSrc;
+            img.alt = `Imagen ${index + 1}`;
+            img.loading = 'lazy';
+            img.onerror = function() {
+                this.onerror = null;
+                this.src = 'https://via.placeholder.com/800x600?text=Imagen+no+disponible';
+            };
+            
+            slide.appendChild(img);
             carouselTrack.appendChild(slide);
             
             // Crear dots
@@ -308,13 +438,28 @@ function initCarouselSystem() {
         carouselModal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
         
-        // Actualizar posición
-        updateCarouselPosition();
+        // Asegurar que esté en modo normal
+        carouselModal.classList.remove('fullscreen');
+        
+        // Actualizar posición después de que las imágenes carguen
+        setTimeout(() => {
+            updateCarouselPosition();
+            resetToFirstImage();
+        }, 100);
+        
+        // Añadir evento de doble clic para pantalla completa
+        setTimeout(() => {
+            document.querySelectorAll('.carousel-slide').forEach(slide => {
+                slide.addEventListener('dblclick', () => {
+                    toggleFullscreen();
+                });
+            });
+        }, 200);
     }
     
     // Navegación
     function goToSlide(index) {
-        if (isTransitioning || index === currentIndex) return;
+        if (isTransitioning || index === currentIndex || !currentAlbum) return;
         
         isTransitioning = true;
         currentIndex = index;
@@ -328,14 +473,14 @@ function initCarouselSystem() {
     }
     
     function nextSlide() {
-        if (isTransitioning) return;
+        if (isTransitioning || !currentAlbum) return;
         
         const nextIndex = (currentIndex + 1) % currentAlbum.length;
         goToSlide(nextIndex);
     }
     
     function prevSlide() {
-        if (isTransitioning) return;
+        if (isTransitioning || !currentAlbum) return;
         
         const prevIndex = (currentIndex - 1 + currentAlbum.length) % currentAlbum.length;
         goToSlide(prevIndex);
@@ -343,7 +488,7 @@ function initCarouselSystem() {
     
     // Actualizar posición del carrusel
     function updateCarouselPosition() {
-        if (!carouselTrack) return;
+        if (!carouselTrack || !currentAlbum) return;
         
         const slideWidth = carouselTrack.clientWidth;
         carouselTrack.style.transform = `translateX(-${currentIndex * slideWidth}px)`;
@@ -353,12 +498,14 @@ function initCarouselSystem() {
     function updateCounters() {
         if (!currentAlbum) return;
         
-        currentSlide.textContent = currentIndex + 1;
-        totalSlides.textContent = currentAlbum.length;
+        if (currentSlide) currentSlide.textContent = currentIndex + 1;
+        if (totalSlides) totalSlides.textContent = currentAlbum.length;
     }
     
     // Actualizar dots
     function updateDots() {
+        if (!carouselDots) return;
+        
         const dots = carouselDots.querySelectorAll('.carousel-dot');
         dots.forEach((dot, index) => {
             dot.classList.toggle('active', index === currentIndex);
@@ -374,12 +521,38 @@ function initCarouselSystem() {
         carouselNext.addEventListener('click', nextSlide);
     }
     
+    // Event listener para pantalla completa
+    if (fullscreenBtn) {
+        fullscreenBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleFullscreen();
+        });
+    }
+    
     // Cerrar modal
     function closeCarouselHandler() {
+        console.log('❌ Cerrando carrusel...');
+        
+        // 1. SIEMPRE salir de pantalla completa
+        exitFullscreen();
+        
+        // 2. Ocultar modal
         carouselModal.style.display = 'none';
         document.body.style.overflow = '';
+        
+        // 3. Resetear variables
         currentAlbum = null;
         currentIndex = 0;
+        isFullscreen = false;
+        
+        // 4. Limpiar contenido
+        setTimeout(() => {
+            if (carouselTrack) carouselTrack.innerHTML = '';
+            if (carouselDots) carouselDots.innerHTML = '';
+            if (currentSlide) currentSlide.textContent = '1';
+            if (totalSlides) totalSlides.textContent = '0';
+        }, 300);
     }
     
     if (closeCarouselModal) {
@@ -407,7 +580,18 @@ function initCarouselSystem() {
                 break;
             case 'Escape':
                 e.preventDefault();
-                closeCarouselHandler();
+                if (isFullscreen) {
+                    exitFullscreen(); // Solo salir de pantalla completa
+                } else {
+                    closeCarouselHandler(); // Cerrar modal completamente
+                }
+                break;
+            case 'f':
+            case 'F':
+                if (e.ctrlKey || e.metaKey) {
+                    e.preventDefault();
+                    toggleFullscreen();
+                }
                 break;
         }
     });
@@ -416,20 +600,22 @@ function initCarouselSystem() {
     let touchStartX = 0;
     let touchEndX = 0;
     
-    carouselTrack.addEventListener('touchstart', function(e) {
-        touchStartX = e.changedTouches[0].screenX;
-    }, { passive: true });
-    
-    carouselTrack.addEventListener('touchend', function(e) {
-        touchEndX = e.changedTouches[0].screenX;
-        handleSwipe();
-    }, { passive: true });
+    if (carouselTrack) {
+        carouselTrack.addEventListener('touchstart', function(e) {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+        
+        carouselTrack.addEventListener('touchend', function(e) {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        }, { passive: true });
+    }
     
     function handleSwipe() {
         const swipeThreshold = 50;
         const diffX = touchStartX - touchEndX;
         
-        if (Math.abs(diffX) < swipeThreshold) return;
+        if (Math.abs(diffX) < swipeThreshold || !currentAlbum) return;
         
         if (diffX > 0) {
             nextSlide();
@@ -438,10 +624,46 @@ function initCarouselSystem() {
         }
     }
     
-    // Redimensionar ventana
-    window.addEventListener('resize', updateCarouselPosition);
+    // Redimensionar ventana - IMPORTANTE: recalcular posición
+    window.addEventListener('resize', function() {
+        if (carouselModal.style.display === 'flex' && currentAlbum) {
+            updateCarouselPosition();
+        }
+    });
+    
+    // Cuando las imágenes se cargan, recalcular posición
+    if (carouselTrack) {
+        carouselTrack.addEventListener('load', function(e) {
+            if (e.target.tagName === 'IMG' && carouselModal.style.display === 'flex') {
+                updateCarouselPosition();
+            }
+        }, true);
+    }
+    
+    console.log('✅ Sistema de carrusel inicializado');
 }
 
+// ============================================
+// INICIALIZACIÓN COMPLETA
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 FUNDEBIP - Iniciando sistema...');
+    
+    // Inicializar todos los módulos
+    initMobileMenu();
+    initSmoothScroll();
+    initModalSystem();
+    initCarouselSystem(); // Esta es la función corregida
+    initScrollAnimations();
+    initActiveLinkTracking();
+    initImageLoading();
+    initHeaderEffects();
+    initDynamicContent();
+    
+    console.log('✅ FUNDEBIP - Sistema inicializado correctamente');
+});
+
+// ... (el resto de tus funciones permanecen igual, NO las modifiques) ...
 // ============================================
 // ANIMACIONES AL SCROLL
 // ============================================
@@ -770,3 +992,7 @@ function throttle(func, limit = 100) {
 // INICIALIZACIÓN COMPLETA
 // ============================================
 console.log('FUNDEBIP - Sistema inicializado correctamente');
+
+
+
+

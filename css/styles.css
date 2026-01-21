@@ -394,17 +394,17 @@ nav a i {
     box-shadow: var(--sombra-media);
 }
 
-.card-icon {
-    font-size: 3rem;
-    color: var(--color-rojo-claro);
-    margin-bottom: var(--espacio-md);
-}
-
 .description-card p {
     color: var(--color-blanco);
     font-size: 1.3rem;
     line-height: 1.8;
     opacity: 0.9;
+}
+
+.card-icon {
+    font-size: 3rem;
+    color: var(--color-rojo-claro);
+    margin-bottom: var(--espacio-md);
 }
 
 .hero-stats {
@@ -506,15 +506,15 @@ nav a i {
 
 .leadership-image {
     position: relative;
-    height: 300px;
     overflow: hidden;
+    aspect-ratio: 4/3; /* O la proporción que prefieras */
+    width: 100%;
 }
 
 .leadership-image img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    transition: var(--transicion-suave);
+    object-fit: contain; /* Contiene toda la imagen */
 }
 
 .leadership-card:hover .leadership-image img {
@@ -681,14 +681,18 @@ nav a i {
 
 .card-image {
     position: relative;
-    height: 300px;
+    height: 400px;
     overflow: hidden;
+    background: #f5f5f5; /* Fondo opcional para áreas vacías */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .card-image img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain; /* Cambiado de 'cover' a 'contain' */
     transition: var(--transicion-suave);
 }
 
@@ -793,14 +797,18 @@ nav a i {
 
 .volunteer-image {
     position: relative;
-    height: 250px;
+    height: 400px;
     overflow: hidden;
+    background: #f5f5f5; /* Fondo opcional para rellenar áreas vacías */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .volunteer-image img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain; /* Cambiado de 'cover' a 'contain' */
     transition: var(--transicion-suave);
 }
 
@@ -957,13 +965,22 @@ nav a i {
     position: relative;
     border-radius: var(--radio-md);
     overflow: hidden;
-    height: 300px;
+    height: auto; /* Altura flexible */
+    min-height: 250px;
+    max-height: 400px;
+    background: #f5f5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px; /* Espacio interno */
 }
 
 .dashboard-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 380px; /* Considerando el padding */
+    object-fit: contain;
     transition: var(--transicion-suave);
 }
 
@@ -1165,22 +1182,38 @@ nav a i {
     margin: 0 auto;
 }
 
-.pap-image {
+
+
+
+.pap-image{
     position: relative;
-    height: 400px;
+    border-radius: var(--radio-md);
     overflow: hidden;
+    height: auto; /* Altura flexible */
+    min-height: 250px;
+    max-height: 400px;
+    background: #f5f5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px; /* Espacio interno */
 }
 
-.pap-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+.pap-image img  {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 380px; /* Considerando el padding */
+    object-fit: contain;
     transition: var(--transicion-suave);
 }
 
 .pap-card:hover .pap-image img {
     transform: scale(1.03);
 }
+
+
+
 
 .pap-overlay {
     position: absolute;
@@ -1525,6 +1558,8 @@ footer::before {
     overflow: hidden;
     position: relative;
     animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex; /* AÑADIR */
+    flex-direction: column; /* AÑADIR */
 }
 
 @keyframes slideUp {
@@ -1570,18 +1605,172 @@ footer::before {
     transform: rotate(90deg);
 }
 
+/* Ajustes específicos para imágenes en el modal */
 .modal-body {
-    height: calc(100% - 80px);
-    padding: var(--espacio-lg);
-    overflow: auto;
+    flex: 1; /* Ocupa todo el espacio restante */
+    padding: 0; /* Sin padding */
+    margin: 0;
+    overflow: auto; /* O hidden si no quieres scroll */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 0; /* Importante para flexbox */
 }
 
-.modal-body img, .modal-body iframe {
+/* Contenedor específico para imágenes */
+.modal-image-container {
     width: 100%;
     height: 100%;
-    object-fit: contain;
-    border-radius: var(--radio-md);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0; /* Eliminar padding */
+    box-sizing: border-box;
 }
+
+.modal-body img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain; /* Cambiar fill por contain */
+    display: block;
+}
+
+/* Para iframes (PDFs, videos, etc) */
+.modal-body iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 0;
+    display: block;
+}
+
+
+/* ============================================
+   CONTROLES INFERIORES DEL CARRUSEL
+   ============================================ */
+
+/* Contenedor de controles en la parte inferior */
+.carousel-bottom-controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 25px; /* Un poco menos de padding */
+    background: linear-gradient(to top, 
+        rgba(0, 0, 0, 0.4) 0%,      /* Cambiado de 0.8 a 0.4 */
+        rgba(0, 0, 0, 0) 100%      /* Más transparente */
+    );
+    z-index: 20;
+    gap: 15px;
+}
+
+/* Controles de la derecha (botón + contador) */
+.carousel-right-controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+/* Botón de pantalla completa */
+.carousel-btn {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: var(--color-blanco);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+}
+
+.carousel-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(1.1);
+}
+
+/* Estado activo (pantalla completa) */
+.carousel-btn.fullscreen-toggle.active {
+    background: var(--color-rojo);
+}
+
+.carousel-btn.fullscreen-toggle.active i {
+    transform: rotate(180deg);
+}
+
+/* Contador - ajustar posición */
+.carousel-counter {
+    background: rgba(0, 0, 0, 0.7);
+    color: var(--color-blanco);
+    padding: 8px 16px;
+    border-radius: var(--radio-full);
+    font-size: 1rem;
+    font-weight: 600;
+    min-width: 80px;
+    text-align: center;
+}
+
+/* Ajustar los dots existentes */
+.carousel-dots {
+    display: flex;
+    gap: 12px;
+    margin: 0;
+}
+
+/* ============================================
+   ESTILOS PARA MODO PANTALLA COMPLETA
+   ============================================ */
+
+.modal-carousel.fullscreen .carousel-bottom-controls {
+    padding: 15px 30px;
+    background: linear-gradient(to top, 
+        rgba(0, 0, 0, 0.3) 0%,      /* Cambiado de 0.9 a 0.3 */
+        rgba(0, 0, 0, 0.1) 100%    /* Cambiado de 0.4 a 0.1 */
+    );
+}
+
+.modal-carousel.fullscreen .carousel-btn {
+    width: 55px;
+    height: 55px;
+    font-size: 1.3rem;
+}
+
+.modal-carousel.fullscreen .carousel-counter {
+    font-size: 1.1rem;
+    padding: 10px 18px;
+}
+
+.modal-carousel.fullscreen .carousel-dots {
+    gap: 14px;
+}
+
+.modal-carousel.fullscreen .carousel-dot {
+    width: 14px;
+    height: 14px;
+}
+
+/* Ocultar/mostrar controles al pasar el mouse */
+.carousel-bottom-controls {
+    opacity: 0.9;
+    transition: opacity 0.3s ease;
+}
+
+.carousel-container:hover .carousel-bottom-controls {
+    opacity: 1;
+}
+
+
+
+
 
 /* Modal Carrusel */
 .modal-carousel .modal-content {
@@ -1773,13 +1962,6 @@ footer::before {
         font-size: 1.2rem;
     }
     
-    .description-card {
-        padding: var(--espacio-md);
-    }
-    
-    .description-card p {
-        font-size: 1.1rem;
-    }
     
     .hero-stats {
         gap: var(--espacio-sm);
@@ -1824,9 +2006,17 @@ footer::before {
     }
     
     .modal-content {
-        width: 95vw;
-        height: 85vh;
-    }
+    width: 90vw;
+    max-width: 1200px;
+    height: 90vh;
+    background: var(--color-blanco);
+    border-radius: var(--radio-lg);
+    overflow: hidden;
+    position: relative;
+    animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex; /* AÑADE ESTO */
+    flex-direction: column; /* AÑADE ESTO */
+}
     
     .carousel-nav {
         width: 50px;
@@ -1861,9 +2051,6 @@ footer::before {
         grid-template-columns: 1fr;
     }
     
-    .modal-content {
-        height: 80vh;
-    }
 }
 
 /* ============================================
@@ -2159,4 +2346,37 @@ footer::before {
 
 .rotate-icon:hover {
     transform: rotate(15deg);
+}
+
+
+.inicio-container {
+    width: 80%;
+    margin: 0 auto;
+    /* centra el contenedor horizontalmente */
+    text-align: center;
+    /* centra todo el contenido dentro */
+    position: relative;
+    /* mantiene la posición relativa si quieres agregar overlays */
+}
+
+.inicio-container img.inicio-img {
+    width: 100%;
+    /* ocupa todo el ancho del contenedor */
+    max-width: 750px;
+    /* limita tamaño máximo */
+    height: auto;
+    border-radius: 8px;
+    display: block;
+    margin: 0 auto;
+    /* asegura que esté centrada */
+}
+
+/* Contenedor principal con efecto especial */
+.inicio-container {
+    position: relative;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 3rem;
+    text-align: center;
+    z-index: 1;
 }
