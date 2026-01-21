@@ -178,13 +178,13 @@ const albums = {
     "img/carr1/caballos.jpeg"
   ],
   autogestion: [
+    "img/eventos/lentes.jpeg",
     "img/autoges/medicina.jpeg",
     "img/autoges/medicina2.jpeg",
     "img/autoges/medicina4.jpeg",
     "img/autoges/amplificador.jpeg"
   ],
-  eventos: [
-    "img/eventos/lentes.jpeg",
+  eventos: [    
     "img/eventos/entrega_kits.jpeg",
     "img/eventos/manifestaciones.jpeg",
     "img/eventos/colada.jpeg",
