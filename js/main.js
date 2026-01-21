@@ -217,6 +217,11 @@ function initCarouselSystem() {
             "img/eventos/manifestaciones.jpeg",
             "img/eventos/colada.jpeg",
             "img/eventos/navidad.jpeg"
+        ],
+        
+        pap: [            
+            "img/actividades2026/Plan2Actividades2026.jpeg",
+            "img/actividades2026/PlanActividades2026.jpeg"           
         ]
     };
     
