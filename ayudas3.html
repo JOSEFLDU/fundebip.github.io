@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>FUNDEBIP | Dashboard Ejecución Presupuestaria 2026</title>
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Chart.js Data Labels Plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', 'Roboto', system-ui, sans-serif;
+            background: linear-gradient(145deg, #f0f2f5 0%, #e2e6ea 100%);
+            padding: 20px 16px;
+        }
+
+        :root {
+            --fundebip-red: #DB3109;
+            --fundebip-red-dark: #B82A07;
+            --fundebip-gray: #7D7877;
+            --fundebip-gray-dark: #5D5A59;
+            --shadow-lg: 0 20px 40px -12px rgba(0, 0, 0, 0.15);
+            --shadow-sm: 0 6px 14px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 25px 35px -12px rgba(219, 49, 9, 0.25);
+        }
+
+        .dashboard {
+            max-width: 1800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        /* KPI superiores */
+        .kpi-superior {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 16px;
+        }
+
+        .kpi-superior-card {
+            background: white;
+            border-radius: 24px;
+            padding: 14px 8px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+            border-top: 5px solid var(--fundebip-red);
+            border-bottom: 1px solid rgba(125, 120, 119, 0.2);
+        }
+
+        .kpi-superior-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .kpi-superior-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #2C3E50;
+            margin-bottom: 6px;
+        }
+
+        .kpi-superior-valor {
+            font-size: 28px;
+            font-weight: 800;
+            color: #000000;
+            margin: 4px 0;
+            letter-spacing: -1px;
+        }
+
+        .kpi-superior-sub {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--fundebip-gray-dark);
+            background: rgba(125, 120, 119, 0.1);
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 30px;
+        }
+
+        /* LAYOUT: mapa pequeño, tabla reducida, gráficos unificados */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 0.8fr 0.9fr 1.2fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        /* MAPA */
+        .map-panel {
+            background: white;
+            border-radius: 28px;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            border: 1px solid rgba(125, 120, 119, 0.15);
+        }
+
+        #map {
+            height: 38vh;
+            width: 100%;
+            background: #e9f0f5;
+            min-height: 300px;
+        }
+
+        .map-controls {
+            padding: 10px 12px;
+            background: linear-gradient(135deg, var(--fundebip-gray-dark), #4a4746);
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-fundebip {
+            background: linear-gradient(135deg, var(--fundebip-red), var(--fundebip-red-dark));
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.7rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--fundebip-gray), var(--fundebip-gray-dark));
+        }
+
+        select {
+            padding: 6px 12px;
+            border-radius: 40px;
+            border: none;
+            background: white;
+            font-weight: 500;
+            font-size: 0.7rem;
+            flex: 1;
+            cursor: pointer;
+        }
+
+        /* TABLA CENTRAL */
+        .central-table-panel {
+            background: white;
+            border-radius: 28px;
+            box-shadow: var(--shadow-lg);
+            overflow-y: auto;
+            max-height: 75vh;
+            border: 1px solid rgba(125, 120, 119, 0.15);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-fundebip {
+            background: linear-gradient(135deg, var(--fundebip-gray-dark), var(--fundebip-gray), var(--fundebip-red));
+            color: white;
+            padding: 14px 12px;
+            text-align: center;
+            border-radius: 28px 28px 0 0;
+        }
+
+        .header-fundebip h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        .header-fundebip h2 {
+            font-size: 0.65rem;
+            font-weight: 500;
+        }
+
+        .ejecucion-section {
+            padding: 12px;
+            background: #fafbfc;
+            border-bottom: 1px solid rgba(125, 120, 119, 0.15);
+        }
+
+        .ejecucion-title {
+            font-size: 0.7rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-left: 4px solid var(--fundebip-red);
+            padding-left: 10px;
+        }
+
+        .presupuesto-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .presupuesto-card {
+            background: white;
+            border-radius: 16px;
+            padding: 8px 4px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .presupuesto-label {
+            font-size: 8px;
+            font-weight: 700;
+            color: var(--fundebip-gray);
+        }
+
+        .presupuesto-valor {
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .progress-bar-bg {
+            background: #e8e8e8;
+            border-radius: 40px;
+            height: 8px;
+            margin: 8px 0 4px;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, var(--fundebip-red), #F57C00);
+            width: 52.2%;
+            height: 100%;
+            border-radius: 40px;
+        }
+
+        .tabla-container {
+            padding: 10px 12px 14px;
+            flex: 1;
+        }
+
+        .tabla-container h3 {
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            border-left: 4px solid var(--fundebip-red);
+            padding-left: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        th {
+            background: linear-gradient(135deg, #5D5A59, #3D3A39);
+            color: white;
+            padding: 7px 5px;
+            font-weight: 700;
+            font-size: 0.65rem;
+        }
+
+        td {
+            padding: 6px 5px;
+            border-bottom: 1px solid #eef2f5;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        tr:hover td {
+            filter: brightness(0.96);
+            background: rgba(219, 49, 9, 0.05);
+        }
+
+        tr.seleccionada td {
+            background: rgba(219, 49, 9, 0.2);
+            border-left: 3px solid var(--fundebip-red);
+            font-weight: 700;
+        }
+
+        .total-row {
+            background: #e9ecef;
+            font-weight: 800;
+            border-top: 2px solid var(--fundebip-red);
+        }
+        .total-row td {
+            text-align: center;
+            font-weight: 800;
+        }
+
+        /* CONTENEDOR DE GRÁFICO ÚNICO CON PAGINACIÓN (TABS) */
+        .unified-chart-container {
+            background: white;
+            border-radius: 28px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(125, 120, 119, 0.15);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* TABS / PAGINACIÓN */
+        .chart-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid rgba(125, 120, 119, 0.2);
+            padding: 0 20px;
+            gap: 8px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 14px 24px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--fundebip-gray-dark);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-bottom: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: 0.3px;
+        }
+
+        .tab-btn i {
+            font-size: 1rem;
+            color: var(--fundebip-gray);
+        }
+
+        .tab-btn.active {
+            color: var(--fundebip-red);
+            border-bottom-color: var(--fundebip-red);
+        }
+
+        .tab-btn.active i {
+            color: var(--fundebip-red);
+        }
+
+        .tab-btn:hover:not(.active) {
+            color: var(--fundebip-red-dark);
+            background: rgba(219, 49, 9, 0.05);
+            border-radius: 12px 12px 0 0;
+        }
+
+        /* Panel de gráfico */
+        .chart-panel {
+            padding: 20px 20px 20px 20px;
+            transition: all 0.2s;
+            min-height: 420px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chart-panel canvas {
+            max-height: 360px !important;
+            width: 100% !important;
+            height: auto !important;
+        }
+
+        .footer-chart {
+            background: var(--fundebip-gray-dark);
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+            padding: 8px;
+            font-size: 8px;
+            margin-top: auto;
+        }
+
+        .footer {
+            background: var(--fundebip-gray-dark);
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+            padding: 8px;
+            font-size: 8px;
+            border-radius: 0 0 28px 28px;
+        }
+
+        @media (max-width: 1300px) {
+            .main-layout {
+                grid-template-columns: 1fr 1fr 1.2fr;
+                gap: 16px;
+            }
+        }
+
+        @media (max-width: 1100px) {
+            .kpi-superior {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .main-layout {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+
+        .custom-tooltip {
+            background: var(--fundebip-gray-dark);
+            color: white;
+            border-radius: 20px;
+            padding: 3px 10px;
+            font-size: 10px;
+        }
+
+        .numero-marcador {
+            background: transparent;
+            font-weight: 900;
+            text-shadow: 0px 0px 2px white;
+        }
+    </style>
+</head>
+
+<body>
+<div class="dashboard">
+    <!-- KPI -->
+    <div class="kpi-superior">
+        <div class="kpi-superior-card"><div class="kpi-superior-label">TOTAL AYUDAS</div><div class="kpi-superior-valor">157</div><div class="kpi-superior-sub">Ene - May 2026</div></div>
+        <div class="kpi-superior-card"><div class="kpi-superior-label">AYUDA ECONÓMICA</div><div class="kpi-superior-valor">98</div><div class="kpi-superior-sub">$45.363,68</div></div>
+        <div class="kpi-superior-card"><div class="kpi-superior-label">AYUDA TÉCNICA/MED</div><div class="kpi-superior-valor">40</div><div class="kpi-superior-sub">$29.564,07</div></div>
+        <div class="kpi-superior-card"><div class="kpi-superior-label">SINIESTROS</div><div class="kpi-superior-valor">19</div><div class="kpi-superior-sub">$8.251,00</div></div>
+        <div class="kpi-superior-card"><div class="kpi-superior-label">MONTO TOTAL</div><div class="kpi-superior-valor">$83.179</div><div class="kpi-superior-sub">Ejecutado</div></div>
+        <div class="kpi-superior-card"><div class="kpi-superior-label">PRESUPUESTO</div><div class="kpi-superior-valor">$159.341</div><div class="kpi-superior-sub">52,2% ejecutado</div></div>
+    </div>
+
+    <div class="main-layout">
+        <!-- MAPA -->
+        <div class="map-panel">
+            <div id="map"></div>
+            <div class="map-controls">
+                <select id="buscadorProvincia"><option value="">🔍 Buscar provincia...</option></select>
+                <button class="btn-fundebip" id="btnBuscar"><i class="fas fa-location-dot"></i> Ir</button>
+                <button class="btn-fundebip btn-secondary" id="btnInicio"><i class="fas fa-home"></i> Inicio</button>
+            </div>
+        </div>
+
+        <!-- TABLA CENTRAL -->
+        <div class="central-table-panel">
+            <div class="header-fundebip">
+                <h1>FUNDEBIP</h1>
+                <h2>EJECUCIÓN PRESUPUESTARIA 2026</h2>
+            </div>
+            <div class="ejecucion-section">
+                <div class="ejecucion-title"><i class="fas fa-chart-line"></i> EJECUCIÓN PRESUPUESTARIA</div>
+                <div class="presupuesto-grid">
+                    <div class="presupuesto-card"><div class="presupuesto-label">PRESUPUESTO TOTAL</div><div class="presupuesto-valor">$159.341,37</div></div>
+                    <div class="presupuesto-card"><div class="presupuesto-label">EJECUTADO</div><div class="presupuesto-valor" style="color:#DB3109;">$83.178,75</div></div>
+                    <div class="presupuesto-card"><div class="presupuesto-label">POR EJECUTAR</div><div class="presupuesto-valor" style="color:#2E7D32;">$76.162,62</div></div>
+                    <div class="presupuesto-card"><div class="presupuesto-label">% EJECUCIÓN</div><div class="presupuesto-valor" style="color:#F5A623;">52,2%</div></div>
+                </div>
+                <div class="progress-bar-bg"><div class="progress-fill"></div></div>
+                <div style="text-align: center; font-size: 9px; margin-top: 4px;">$83.178,75 de $159.341,37</div>
+            </div>
+            <div class="tabla-container">
+                <h3><i class="fas fa-map-marked-alt"></i> AYUDAS POR PROVINCIA (verde↔naranja)</h3>
+                <table id="tablaAyudas">
+                    <thead><tr><th>PROVINCIA</th><th style="text-align:center">TOTAL</th></tr></thead>
+                    <tbody id="tablaBody"></tbody>
+                </table>
+            </div>
+            <div class="footer"><i class="fas fa-calendar-alt"></i> ENERO - MAYO 2026 · FUNDEBIP</div>
+        </div>
+
+        <!-- CONTENEDOR ÚNICO DE GRÁFICOS CON PAGINACIÓN (TABS) -->
+        <div class="unified-chart-container">
+            <div class="chart-tabs">
+                <button class="tab-btn active" data-tab="tab1">
+                    <i class="fas fa-chart-line"></i> Gráfico 1 · Ayudas Mensuales
+                </button>
+                <button class="tab-btn" data-tab="tab2">
+                    <i class="fas fa-chart-bar"></i> Gráfico 2 · Ayudas por Tipo (Invertido)
+                </button>
+            </div>
+            <div class="chart-panel">
+                <canvas id="chartMensual" style="display: block;"></canvas>
+                <canvas id="chartTipoAyuda" style="display: none;"></canvas>
+            </div>
+            <div class="footer-chart">
+                <i class="fas fa-chart-simple"></i> Datos actualizados · Ejecución presupuestaria 2026
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    Chart.register(ChartDataLabels);
+    
+    Chart.defaults.set('plugins.datalabels', {
+        font: { weight: 'bold', size: 12 },
+        anchor: 'end',
+        align: 'top',
+        offset: 8
+    });
+
+    // DATOS
+    const ayudasPorProvincia = {
+        'Pichincha': 64, 'Los Ríos': 16, 'Manabí': 12, 'Guayas': 9,
+        'Imbabura': 8, 'Cotopaxi': 8, 'Santo Domingo de los Tsáchilas': 8,
+        'Loja': 7, 'El Oro': 6, 'Tungurahua': 5, 'Bolívar': 5,
+        'Esmeraldas': 2, 'Chimborazo': 2, 'Cañar': 2, 'Carchi': 2, 'Morona Santiago': 1
+    };
+
+    const coordenadas = {
+        'Pichincha': [-0.2, -78.5], 'Los Ríos': [-1.6, -79.5], 'Manabí': [-1.0, -80.5],
+        'Guayas': [-2.2, -79.9], 'Imbabura': [0.4, -78.3], 'Cotopaxi': [-0.9, -78.8],
+        'Santo Domingo de los Tsáchilas': [-0.3, -79.2], 'Loja': [-4.0, -79.2], 'El Oro': [-3.5, -79.9],
+        'Tungurahua': [-1.2, -78.5], 'Bolívar': [-1.6, -79.0], 'Esmeraldas': [1.0, -79.6],
+        'Chimborazo': [-1.7, -78.7], 'Cañar': [-2.5, -79.0], 'Carchi': [0.8, -78.0], 'Morona Santiago': [-2.8, -77.9]
+    };
+
+    const datosMensuales = { labels: ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO'], valores: [25, 23, 45, 28, 36], montos: [9130.17, 17566.31, 16591.28, 22028.24, 17862.75] };
+    const tipoAyuda = { labels: ['Económica', 'Técnica/Medicina', 'Siniestros'], valores: [98, 40, 19], montos: [45363.68, 29564.07, 8251.00] };
+    const VISTA_INICIAL = { center: [-1.8, -78.2], zoom: 6.2 };
+    let map, marcadores = {};
+    let chartMensual, chartTipoAyuda;
+
+    // Escala de colores (verde -> naranja)
+    function getColorByLoad(valor) {
+        if (valor >= 30) return '#1B5E20';
+        if (valor >= 16) return '#2E7D32';
+        if (valor >= 9)  return '#43A047';
+        if (valor >= 5)  return '#F9A825';
+        if (valor >= 2)  return '#FF8F00';
+        return '#FF6D00';
+    }
+
+    function getPolygonColor(valor) {
+        if (valor >= 30) return '#1B5E20';
+        if (valor >= 16) return '#2E7D32';
+        if (valor >= 9)  return '#43A047';
+        if (valor >= 5)  return '#F9A825';
+        if (valor >= 2)  return '#FF8F00';
+        return '#FF6D00';
+    }
+
+    function getTableRowGradientStyle(valor) {
+        if (valor >= 30) return 'background: linear-gradient(90deg, #C8E6C9, #81C784); font-weight: 700;';
+        if (valor >= 16) return 'background: linear-gradient(90deg, #DCEDC8, #AED581);';
+        if (valor >= 9)  return 'background: linear-gradient(90deg, #F1F8E9, #DCE775);';
+        if (valor >= 5)  return 'background: linear-gradient(90deg, #FFF9C4, #FFD54F);';
+        if (valor >= 2)  return 'background: linear-gradient(90deg, #FFE0B2, #FFB74D);';
+        return 'background: linear-gradient(90deg, #FFCCBC, #FF8A65);';
+    }
+
+    function initMap() {
+        map = L.map('map').setView(VISTA_INICIAL.center, VISTA_INICIAL.zoom);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap',
+            maxZoom: 12,
+            minZoom: 5.5
+        }).addTo(map);
+        const geojsonUrl = 'https://raw.githubusercontent.com/fgochez/Ecuador_shapefile/master/ecuador_provincias.geojson';
+        fetch(geojsonUrl)
+            .then(res => res.json())
+            .then(data => {
+                L.geoJSON(data, {
+                    style: feature => {
+                        let nombre = feature.properties.PROVINCIA || feature.properties.NAME_1;
+                        let valor = ayudasPorProvincia[nombre] || 0;
+                        return { fillColor: getPolygonColor(valor), weight: 1, opacity: 0.6, color: '#7D7877', fillOpacity: 0.35 };
+                    },
+                    onEachFeature: (feature, layer) => {
+                        let nombre = feature.properties.PROVINCIA || feature.properties.NAME_1;
+                        let valor = ayudasPorProvincia[nombre] || 0;
+                        layer.bindTooltip(`${nombre}: ${valor} ayudas`, { sticky: true, className: 'custom-tooltip' });
+                        layer.on('click', () => resaltarProvincia(nombre));
+                    }
+                }).addTo(map);
+                agregarMarcadores();
+            })
+            .catch(() => agregarMarcadores());
+    }
+
+    function agregarMarcadores() {
+        for (const [prov, valor] of Object.entries(ayudasPorProvincia)) {
+            if (coordenadas[prov]) {
+                const [lat, lon] = coordenadas[prov];
+                const radius = Math.sqrt(valor) * 3.8 + 7;
+                const bombColor = getColorByLoad(valor);
+                L.circleMarker([lat, lon], {
+                    radius: radius,
+                    fillColor: bombColor,
+                    color: '#3E3A39',
+                    weight: 1.5,
+                    fillOpacity: 0.9
+                }).addTo(map);
+                const icon = L.divIcon({
+                    html: `<div style="font-weight:900; font-size:${valor > 40 ? '14px' : '11px'}; color:${valor > 30 ? 'white' : '#1F1F1F'}; text-align:center;">${valor}</div>`,
+                    iconSize: [radius * 1.6, radius * 1.6],
+                    className: 'numero-marcador'
+                });
+                const marker = L.marker([lat, lon], { icon: icon });
+                marker.on('click', () => resaltarProvincia(prov));
+                marker.addTo(map);
+                marcadores[prov] = { marker, lat, lon, valor };
+            }
+        }
+    }
+
+    function resaltarProvincia(provincia) {
+        if (marcadores[provincia]) {
+            map.setView([marcadores[provincia].lat, marcadores[provincia].lon], 8);
+        }
+        document.querySelectorAll('#tablaBody tr').forEach(row => {
+            row.classList.remove('seleccionada');
+            if (row.getAttribute('data-provincia') === provincia) row.classList.add('seleccionada');
+        });
+    }
+
+    function regresarInicio() {
+        map.setView(VISTA_INICIAL.center, VISTA_INICIAL.zoom);
+        document.querySelectorAll('#tablaBody tr').forEach(row => row.classList.remove('seleccionada'));
+    }
+
+    function generarTablaConGradiente() {
+        const tbody = document.getElementById('tablaBody');
+        const ordenadas = Object.entries(ayudasPorProvincia).sort((a, b) => b[1] - a[1]);
+        const total = Object.values(ayudasPorProvincia).reduce((a,b)=>a+b,0);
+        let html = '';
+        for (const [prov, valor] of ordenadas) {
+            let nombreMostrar = prov === 'Santo Domingo de los Tsáchilas' ? 'Sto. Domingo' : prov;
+            const estiloFila = getTableRowGradientStyle(valor);
+            html += `<tr data-provincia="${prov}" onclick="resaltarProvincia('${prov}')" style="${estiloFila}">
+                        <td style="font-weight:600;">${nombreMostrar}</td>
+                        <td style="text-align:center; font-weight:bold;">${valor}</td>
+                    </tr>`;
+        }
+        html += `<tr class="total-row"><td style="text-align:center; font-weight:800;">TOTAL NACIONAL</td><td style="text-align:center; font-weight:800;">${total}</td></tr>`;
+        tbody.innerHTML = html;
+        
+        const select = document.getElementById('buscadorProvincia');
+        select.innerHTML = '<option value="">🔍 Buscar provincia...</option>' +
+            ordenadas.map(([p, v]) => `<option value="${p}">${p === 'Santo Domingo de los Tsáchilas' ? 'Sto. Domingo' : p} (${v})</option>`).join('');
+    }
+
+    // GRÁFICO 1: Barras ROJO, línea GRIS (original)
+    function initChartMensual() {
+        const ctx = document.getElementById('chartMensual').getContext('2d');
+        chartMensual = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: datosMensuales.labels,
+                datasets: [
+                    { 
+                        label: 'N° de Ayudas', 
+                        data: datosMensuales.valores, 
+                        backgroundColor: '#DB3109', 
+                        borderRadius: 12, 
+                        yAxisID: 'y', 
+                        order: 2,
+                        barPercentage: 0.65,
+                        datalabels: { color: '#000000', font: { weight: 'bold', size: 13 }, anchor: 'end', align: 'top', formatter: (v) => v }
+                    },
+                    { 
+                        label: 'Monto (USD)', 
+                        data: datosMensuales.montos, 
+                        type: 'line', 
+                        borderColor: '#7D7877', 
+                        backgroundColor: 'transparent', 
+                        borderWidth: 3,
+                        pointBackgroundColor: '#7D7877', 
+                        pointBorderColor: '#DB3109', 
+                        pointRadius: 6, 
+                        pointHoverRadius: 8, 
+                        tension: 0.2, 
+                        fill: false, 
+                        yAxisID: 'y1', 
+                        order: 1,
+                        datalabels: { color: '#7D7877', font: { weight: 'bold', size: 11 }, anchor: 'end', align: 'top', formatter: (val) => '$' + val.toLocaleString('en-US') }
+                    }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: true,
+                plugins: { tooltip: { callbacks: { label: (ctx) => ctx.dataset.label === 'N° de Ayudas' ? `📊 ${ctx.raw} ayudas` : `💰 $${ctx.raw.toLocaleString('en-US')}` } }, legend: { position: 'top', labels: { font: { size: 11 } } }, datalabels: { display: true } },
+                scales: { y: { beginAtZero: true, title: { display: true, text: 'Número de Ayudas', color: '#7D7877' }, max: 58 }, y1: { position: 'right', beginAtZero: true, title: { display: true, text: 'Monto (USD)', color: '#7D7877' }, grid: { drawOnChartArea: false }, ticks: { callback: (val) => '$' + val.toLocaleString() } } }
+            }
+        });
+    }
+
+    // GRÁFICO 2: Barras GRIS, línea ROJA (invertido)
+    function initChartTipoAyuda() {
+        const ctx = document.getElementById('chartTipoAyuda').getContext('2d');
+        chartTipoAyuda = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: tipoAyuda.labels,
+                datasets: [
+                    { 
+                        label: 'N° de Ayudas', 
+                        data: tipoAyuda.valores, 
+                        backgroundColor: '#7D7877',  // GRIS para las barras
+                        borderRadius: 12, 
+                        yAxisID: 'y', 
+                        order: 2,
+                        barPercentage: 0.7,
+                        datalabels: { color: '#000000', font: { weight: 'bold', size: 13 }, anchor: 'end', align: 'top', formatter: (v) => v }
+                    },
+                    { 
+                        label: 'Monto (USD)', 
+                        data: tipoAyuda.montos, 
+                        type: 'line', 
+                        borderColor: '#DB3109',  // ROJO para la línea
+                        backgroundColor: 'transparent', 
+                        borderWidth: 3,
+                        pointBackgroundColor: '#DB3109', 
+                        pointBorderColor: '#DB3109', 
+                        pointRadius: 6, 
+                        pointHoverRadius: 8, 
+                        tension: 0.2, 
+                        fill: false, 
+                        yAxisID: 'y1', 
+                        order: 1,
+                        datalabels: { color: '#DB3109', font: { weight: 'bold', size: 11 }, anchor: 'end', align: 'top', formatter: (val) => '$' + val.toLocaleString('en-US') }
+                    }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: true,
+                plugins: { 
+                    tooltip: { 
+                        callbacks: { 
+                            label: (ctx) => ctx.dataset.label === 'N° de Ayudas' ? `📊 ${ctx.raw} ayudas` : `💰 $${ctx.raw.toLocaleString('en-US')}` 
+                        } 
+                    }, 
+                    legend: { position: 'top', labels: { font: { size: 11 } } }, 
+                    datalabels: { display: true } 
+                },
+                scales: { 
+                    y: { beginAtZero: true, title: { display: true, text: 'Número de Ayudas', color: '#7D7877' }, max: 110, ticks: { stepSize: 20 } }, 
+                    y1: { position: 'right', beginAtZero: true, title: { display: true, text: 'Monto (USD)', color: '#7D7877' }, grid: { drawOnChartArea: false }, ticks: { callback: (val) => '$' + val.toLocaleString() } } 
+                }
+            }
+        });
+    }
+
+    // PAGINACIÓN / TABS
+    function setupTabs() {
+        const tabs = document.querySelectorAll('.tab-btn');
+        const canvasMensual = document.getElementById('chartMensual');
+        const canvasTipo = document.getElementById('chartTipoAyuda');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const targetTab = tab.getAttribute('data-tab');
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                if (targetTab === 'tab1') {
+                    canvasMensual.style.display = 'block';
+                    canvasTipo.style.display = 'none';
+                    if (chartMensual) chartMensual.update();
+                } else {
+                    canvasMensual.style.display = 'none';
+                    canvasTipo.style.display = 'block';
+                    if (chartTipoAyuda) chartTipoAyuda.update();
+                }
+            });
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initMap();
+        generarTablaConGradiente();
+        initChartMensual();
+        initChartTipoAyuda();
+        setupTabs();
+        
+        document.getElementById('btnBuscar').addEventListener('click', () => { const prov = document.getElementById('buscadorProvincia').value; if(prov && marcadores[prov]) resaltarProvincia(prov); });
+        document.getElementById('btnInicio').addEventListener('click', regresarInicio);
+        window.resaltarProvincia = resaltarProvincia;
+    });
+</script>
+</body>
+
+</html>
