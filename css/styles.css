@@ -484,20 +484,16 @@ nav a i {
 }
 
 .inicio-img {
-    max-width: 100%;
-    width: 100%;
+   
+    width: 800%;
     height: auto;
-    max-height: 320px;
+    max-height: 500px;
     object-fit: contain;
     border-radius: var(--radio-lg);
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     transition: var(--transicion-rapida);
 }
 
-.inicio-img:hover {
-    transform: scale(1.05);
-    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
-}
 
 /* ============================================
    SECCIONES DE CONTENIDO
@@ -513,6 +509,9 @@ nav a i {
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: var(--espacio-lg);
     margin-top: var(--espacio-x0.7);
+    background: linear-gradient(135deg, #555555, #b30000); /* plomo a rojo */
+    padding: 20px; /* espacio para que se vea el fondo */
+    border-radius: 12px; /* bordes suaves */
 }
 
 .leadership-card {
@@ -579,7 +578,7 @@ nav a i {
 }
 
 .leadership-info {
-    padding: var(--espacio-lg);
+    padding: 10px 50px;
 }
 
 .leadership-info h3 {
@@ -663,7 +662,7 @@ nav a i {
 }
 
 .directorio-content {
-    padding: var(--espacio-xl);
+    padding: 10px 20px;
 }
 
 .directorio-title {
@@ -930,7 +929,9 @@ nav a i {
     letter-spacing: 1px;
     text-transform: uppercase;
 }
-
+.leadership-role span {
+    font-size: 1.6rem !important;
+}
 .badge-financial {
     background: rgba(255, 255, 255, 0.2);
     color: var(--color-blanco);
