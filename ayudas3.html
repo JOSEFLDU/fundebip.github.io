@@ -444,6 +444,11 @@
                 <button class="btn-fundebip" id="btnBuscar"><i class="fas fa-location-dot"></i> Ir</button>
                 <button class="btn-fundebip btn-secondary" id="btnInicio"><i class="fas fa-home"></i> Inicio</button>
             </div>
+            <div style="padding: 0 16px 16px; margin-top: 18px;">
+                <button class="btn-fundebip" id="btnRegresar" style="width:100%; justify-content:center; background-color:#1E70BF !important; background-image:none !important; border: 1px solid #1E70BF !important; color:#ffffff !important; margin-top: 16px; border-radius: 40px;">
+                    <i class="fas fa-arrow-left"></i> Regresar
+                </button>
+            </div>
         </div>
 
         <!-- TABLA CENTRAL -->
@@ -780,6 +785,7 @@
         
         document.getElementById('btnBuscar').addEventListener('click', () => { const prov = document.getElementById('buscadorProvincia').value; if(prov && marcadores[prov]) resaltarProvincia(prov); });
         document.getElementById('btnInicio').addEventListener('click', regresarInicio);
+        document.getElementById('btnRegresar').addEventListener('click', () => { history.back(); });
         window.resaltarProvincia = resaltarProvincia;
     });
 </script>

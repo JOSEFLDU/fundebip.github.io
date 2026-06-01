@@ -168,6 +168,57 @@ function openModal(url, type) {
             </div>
         `;
     }
+
+    else if (type === 'page' || type === 'html') {
+        // Agregar loader + iframe
+        modalBody.innerHTML = `
+            <div class="modal-page-container" style="width:100%; height:100%; position:relative;">
+                <div class="iframe-loader" id="iframeLoader" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(255,255,255,0.9); z-index:5;">
+                    <div class="spinner"></div>
+                    <p>Cargando página...</p>
+                </div>
+                <iframe id="modalIframe" src="" frameborder="0" style="width:100%; height:100%; border:none;" title="Contenido" loading="lazy"></iframe>
+            </div>
+        `;
+
+        // Añadir botón en el header para abrir en nueva pestaña
+        const modalHeader = modal.querySelector('.modal-header');
+        if (modalHeader) {
+            // remover botón si ya existe (evitar duplicados)
+            const existing = modalHeader.querySelector('#modalOpenBtn');
+            if (existing) existing.remove();
+
+            const openBtn = document.createElement('button');
+            openBtn.id = 'modalOpenBtn';
+            openBtn.className = 'open-modal-btn';
+            openBtn.title = 'Abrir en nueva pestaña';
+            openBtn.innerHTML = '<i class="fas fa-external-link-alt"></i>';
+            openBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                window.open(url, '_blank');
+            });
+
+            // Insertar antes del botón de cerrar
+            const closeBtn = modalHeader.querySelector('.close-modal');
+            if (closeBtn) modalHeader.insertBefore(openBtn, closeBtn);
+            else modalHeader.appendChild(openBtn);
+        }
+
+        // Asignar src y manejar evento load para ocultar loader
+        const iframe = document.getElementById('modalIframe');
+        const loader = document.getElementById('iframeLoader');
+        if (iframe) {
+            iframe.addEventListener('load', function() {
+                if (loader) loader.style.display = 'none';
+            });
+            iframe.addEventListener('error', function() {
+                if (loader) loader.style.display = 'none';
+                iframe.src = 'ayudas3.html'; // fallback
+            });
+            // set src last to trigger loader while loading
+            iframe.src = url;
+        }
+    }
     
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
