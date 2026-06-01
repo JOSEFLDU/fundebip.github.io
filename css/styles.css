@@ -478,7 +478,7 @@ nav a i {
     justify-content: center;
     align-items: center;
     margin: var(--espacio-lg) 0;
-    max-width: 720px;
+    max-width: 480px;
     margin-left: auto;
     margin-right: auto;
 }
@@ -487,8 +487,8 @@ nav a i {
     max-width: 100%;
     width: 100%;
     height: auto;
-    max-height: 450px;
-    object-fit: cover;
+    max-height: 320px;
+    object-fit: contain;
     border-radius: var(--radio-lg);
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     transition: var(--transicion-rapida);
