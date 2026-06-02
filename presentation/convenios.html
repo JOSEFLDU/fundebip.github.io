@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>FUNDEBIP - Convenios Estratégicos | Vacunas + Educación</title>
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', 'Segoe UI', 'Roboto', system-ui, sans-serif;
+            background: linear-gradient(145deg, #f0f2f5 0%, #e2e6ea 100%);
+            padding: 20px 16px;
+        }
+        :root {
+            --fundebip-red: #DB3109;
+            --fundebip-red-dark: #B82A07;
+            --fundebip-gray: #7D7877;
+            --fundebip-gray-dark: #5D5A59;
+            --vacunas-color: #1e5799;
+            --educacion-color: #2c6e2c;
+            --shadow-lg: 0 20px 40px -12px rgba(0, 0, 0, 0.15);
+            --shadow-sm: 0 6px 14px rgba(0, 0, 0, 0.08);
+        }
+        .dashboard { max-width: 1800px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+        
+        /* Filtro */
+        .filtro-container {
+            background: white;
+            border-radius: 28px;
+            padding: 16px 20px;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            border: 1px solid rgba(125,120,119,0.15);
+        }
+        .filtro-container label { font-weight: 800; font-size: 0.85rem; color: var(--fundebip-gray-dark); }
+        .selector-filtro {
+            padding: 10px 20px;
+            border-radius: 40px;
+            border: 1px solid #ddd;
+            background: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            min-width: 220px;
+        }
+        .leyenda-mapa {
+            display: flex;
+            gap: 20px;
+            margin-left: auto;
+            font-size: 0.75rem;
+        }
+        .leyenda-item { display: flex; align-items: center; gap: 8px; }
+        .color-marker { width: 20px; height: 20px; border-radius: 50%; }
+        .color-marker.vacunas { background: #1e5799; border: 2px solid #DB3109; }
+        .color-marker.educacion { background: #2c6e2c; border: 2px solid #DB3109; }
+        
+        /* KPI superiores */
+        .kpi-superior {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 16px;
+        }
+        .kpi-superior-card {
+            background: white; border-radius: 24px; padding: 14px 8px; text-align: center;
+            box-shadow: var(--shadow-sm); transition: all 0.3s ease;
+            border-top: 5px solid var(--fundebip-red);
+            border-bottom: 2px solid rgba(219, 49, 9, 0.2);
+        }
+        .kpi-superior-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); }
+        .kpi-superior-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #2C3E50; margin-bottom: 6px; }
+        .kpi-superior-valor { font-size: 24px; font-weight: 800; color: #000; margin: 4px 0; }
+        .kpi-superior-sub { font-size: 10px; font-weight: 600; color: var(--fundebip-gray-dark); background: rgba(125,120,119,0.1); display: inline-block; padding: 3px 10px; border-radius: 30px; }
+        .kpi-zero { opacity: 0.5; filter: grayscale(0.3); }
+        
+        /* Layout principal: 3 columnas */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1.1fr;
+            gap: 20px;
+            align-items: start;
+        }
+        
+        /* Tarjetas de convenios */
+        .convenio-card {
+            background: white;
+            border-radius: 28px;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            border: 1px solid rgba(125,120,119,0.15);
+            transition: all 0.3s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .convenio-card.filtrado-oculto { opacity: 0.4; filter: grayscale(0.3); }
+        .convenio-header {
+            padding: 14px 18px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .convenio-header.vacunas { background: linear-gradient(135deg, #1e5799, #2b7abf, var(--fundebip-red)); }
+        .convenio-header.educacion { background: linear-gradient(135deg, #2c3e50, #4a6741, var(--fundebip-red)); }
+        .convenio-header i { font-size: 1.6rem; }
+        .convenio-header h2 { font-size: 1rem; font-weight: 700; }
+        .convenio-header p { font-size: 0.6rem; opacity: 0.9; margin-top: 2px; }
+        .convenio-body { padding: 14px 18px; flex: 1; }
+        .beneficio-lista { list-style: none; }
+        .beneficio-lista li { padding: 6px 0; border-bottom: 1px solid #eef2f5; display: flex; align-items: center; gap: 10px; font-size: 0.72rem; }
+        .beneficio-lista li i { width: 22px; color: var(--fundebip-red); }
+        .badge-descuento { background: #2E7D32; color: white; border-radius: 30px; padding: 2px 8px; font-size: 0.6rem; font-weight: bold; display: inline-block; }
+        .badge-gratis { background: #DB3109; color: white; border-radius: 30px; padding: 2px 8px; font-size: 0.6rem; font-weight: bold; display: inline-block; }
+        .info-contacto { background: #f8f9fa; border-radius: 16px; padding: 10px; margin-top: 10px; font-size: 0.62rem; border-left: 3px solid var(--fundebip-red); }
+        .info-contacto i { width: 18px; color: var(--fundebip-red); }
+        
+        /* MAPA */
+        .map-panel {
+            background: white;
+            border-radius: 28px;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            border: 1px solid rgba(125,120,119,0.15);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        #map { height: 280px; width: 100%; background: #e9f0f5; }
+        .map-controls {
+            padding: 10px 12px;
+            background: linear-gradient(135deg, var(--fundebip-gray-dark), #4a4746);
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        .btn-fundebip {
+            background: linear-gradient(135deg, var(--fundebip-red), var(--fundebip-red-dark));
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.65rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-secondary { background: linear-gradient(135deg, var(--fundebip-gray), var(--fundebip-gray-dark)); }
+        .map-leyenda-inline {
+            padding: 8px 12px;
+            background: #f8f9fa;
+            font-size: 0.6rem;
+            display: flex;
+            gap: 15px;
+            border-top: 1px solid rgba(0,0,0,0.05);
+        }
+        .map-leyenda-inline span { display: inline-flex; align-items: center; gap: 5px; }
+        
+        /* Contenedor unificado: Tabs */
+        .unified-chart-container {
+            background: white;
+            border-radius: 28px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(125,120,119,0.15);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .chart-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 2px solid rgba(125,120,119,0.2);
+            padding: 0 16px;
+            gap: 6px;
+        }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 10px 18px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--fundebip-gray-dark);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-bottom: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tab-btn i { font-size: 0.85rem; color: var(--fundebip-gray); }
+        .tab-btn.active { color: var(--fundebip-red); border-bottom-color: var(--fundebip-red); }
+        .tab-btn.active i { color: var(--fundebip-red); }
+        .chart-panel {
+            padding: 16px;
+            min-height: 340px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .chart-panel canvas { max-height: 260px !important; width: 100% !important; }
+        .tabla-vacunas {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.7rem;
+        }
+        .tabla-vacunas th {
+            background: linear-gradient(135deg, #5D5A59, #3D3A39);
+            color: white;
+            padding: 8px 6px;
+            font-size: 0.65rem;
+        }
+        .tabla-vacunas td { padding: 7px 6px; border-bottom: 1px solid #eef2f5; }
+        .tabla-vacunas tr:hover td { background: rgba(219, 49, 9, 0.05); }
+        
+        .footer-chart {
+            background: var(--fundebip-gray-dark);
+            color: rgba(255,255,255,0.8);
+            text-align: center;
+            padding: 8px;
+            font-size: 0.65rem;
+        }
+        .footer-main {
+            background: var(--fundebip-gray-dark);
+            color: rgba(255,255,255,0.8);
+            text-align: center;
+            padding: 10px;
+            font-size: 0.7rem;
+            border-radius: 28px;
+            margin-top: 20px;
+        }
+        
+        /* Estilo para el enlace en popup */
+        .map-popup-link {
+            color: #DB3109;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 5px;
+        }
+        .map-popup-link:hover { text-decoration: underline; }
+        
+        @media (max-width: 1200px) {
+            .main-layout { grid-template-columns: 1fr 1fr; }
+            .map-panel { grid-column: span 2; margin-top: 0; }
+        }
+        @media (max-width: 800px) {
+            .main-layout { grid-template-columns: 1fr; }
+            .map-panel { grid-column: span 1; }
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    
+    <!-- FILTRO CON LEYENDA -->
+    <div class="filtro-container">
+        <label><i class="fas fa-filter"></i> FILTRAR POR CONVENIO:</label>
+        <select id="selectConvenio" class="selector-filtro">
+            <option value="ambos">📊 CONVENIOS</option>
+            <option value="vacunas">💉 VACUNAMED S.A. (Vacunas)</option>
+            <option value="educacion">🎓 U.E. "La Presentación" (Educación)</option>
+        </select>
+        <div class="leyenda-mapa">
+            <div class="leyenda-item"><div class="color-marker vacunas"></div><span>VACUNAMED (3 puntos)</span></div>
+            <div class="leyenda-item"><div class="color-marker educacion"></div><span>U.E. La Presentación</span></div>
+        </div>
+    </div>
+
+    <!-- KPI resumen -->
+    <div class="kpi-superior">
+        <div class="kpi-superior-card"><div class="kpi-superior-label">CONVENIOS ACTIVOS</div><div class="kpi-superior-valor" id="kpiValorConvenios">2</div><div class="kpi-superior-sub">En ejecución</div></div>
+        <div class="kpi-superior-card"><div class="kpi-superior-label">DTO. PROMEDIO</div><div class="kpi-superior-valor" id="kpiValorDescuento">23%</div><div class="kpi-superior-sub">En servicios</div></div>
+        <div class="kpi-superior-card"><div class="kpi-superior-label">BENEFICIO EDUCACIÓN</div><div class="kpi-superior-valor" id="kpiValorEducacion">30%</div><div class="kpi-superior-sub">Matrícula + Pensión</div></div>
+        <div class="kpi-superior-card"><div class="kpi-superior-label">CONSULTAS GRATIS</div><div class="kpi-superior-valor" id="kpiValorGratis">2 x 20</div><div class="kpi-superior-sub">Pediatría</div></div>
+        <div class="kpi-superior-card"><div class="kpi-superior-label">VIGENCIA</div><div class="kpi-superior-valor" id="kpiValorVigencia">2026-2031</div><div class="kpi-superior-sub">Hasta 5 años</div></div>
+    </div>
+
+    <!-- Layout principal: 3 columnas -->
+    <div class="main-layout">
+        <!-- Columna 1: VACUNAMED -->
+        <div class="convenio-card" id="cardVacunas">
+            <div class="convenio-header vacunas">
+                <i class="fas fa-syringe"></i>
+                <div>
+                    <h2>VACUNAMED S.A.</h2>
+                    <p>Servicios de vacunación y medicina preventiva</p>
+                </div>
+            </div>
+            <div class="convenio-body">
+                <h4><i class="fas fa-tags"></i> Beneficios destacados</h4>
+                <ul class="beneficio-lista">
+                    <li><i class="fas fa-percent"></i> <strong>Vacuna VPH:</strong> <span class="badge-descuento">19.43% dto</span> — $130 → $105</li>
+                    <li><i class="fas fa-percent"></i> <strong>Neumonía:</strong> <span class="badge-descuento">16.66% dto</span> — $72 → $60</li>
+                    <li><i class="fas fa-percent"></i> <strong>Hepatitis A / A+B:</strong> <span class="badge-descuento">20% dto</span> — $25 → $20</li>
+                    <li><i class="fas fa-percent"></i> <strong>Influenza:</strong> <span class="badge-descuento">20% dto</span> — $20 → $16</li>
+                    <li><i class="fas fa-percent"></i> <strong>Megadosis Vitamina C:</strong> <span class="badge-descuento">20% dto</span> — $25 → $20</li>
+                    <li><i class="fas fa-percent"></i> <strong>Consultas pediátricas:</strong> <span class="badge-descuento">40% dto</span> — $25 → $15</li>
+                    <li><i class="fas fa-gift"></i> <strong class="badge-gratis">GRATUIDAD:</strong> 2 consultas pediátricas gratis por cada 20 beneficiarios</li>
+                </ul>
+                <div class="info-contacto">
+                    <i class="fas fa-map-marker-alt"></i> Matriz: Av. América N39-231 y San Francisco, Quito<br>
+                    <i class="fas fa-phone"></i> 0993564906 / 2444-938<br>
+                    <i class="fas fa-envelope"></i> rcevillano@vacunamed.com<br>
+                    <i class="fas fa-user"></i> Administradora: Raquel Sevillano
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna 2: U.E. "La Presentación" -->
+        <div class="convenio-card" id="cardEducacion">
+            <div class="convenio-header educacion">
+                <i class="fas fa-school"></i>
+                <div>
+                    <h2>U.E. "La Presentación"</h2>
+                    <p>Educación desde Inicial II hasta Bachillerato</p>
+                </div>
+            </div>
+            <div class="convenio-body">
+                <h4><i class="fas fa-graduation-cap"></i> Beneficio educativo</h4>
+                <ul class="beneficio-lista">
+                    <li><i class="fas fa-percent"></i> <strong>Matrícula:</strong> <span class="badge-descuento">30% DESCUENTO</span></li>
+                    <li><i class="fas fa-percent"></i> <strong>Pensión mensual:</strong> <span class="badge-descuento">30% DESCUENTO</span></li>
+                    <li><i class="fas fa-children"></i> <strong>Cobertura:</strong> Inicial II hasta Bachillerato</li>
+                    <li><i class="fas fa-check-circle"></i> Sin número mínimo de estudiantes</li>
+                    <li><i class="fas fa-hand-holding-heart"></i> Casos especiales: calamidad doméstica, enfermedad catastrófica</li>
+                </ul>
+                <div class="info-contacto">
+                    <i class="fas fa-map-marker-alt"></i> Miraflores, José de Armero Oe7-10 y Santa Rosa, Quito<br>
+                    <i class="fas fa-user"></i> Representante: MSc. Hna. María Mercedes Iturralde S.<br>
+                    <i class="fas fa-calendar-alt"></i> Vigencia: 22 mayo 2026 – 22 mayo 2031
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna 3: MAPA -->
+        <div class="map-panel">
+            <div id="map"></div>
+            <div class="map-controls">
+                <button class="btn-fundebip" id="btnVerTodos"><i class="fas fa-map-pin"></i> Ver todos los puntos</button>
+                <button class="btn-fundebip btn-secondary" id="btnInicioMapa"><i class="fas fa-home"></i> Inicio</button>
+            </div>
+            <div class="map-leyenda-inline">
+                <span><i class="fas fa-map-marker-alt" style="color:#1e5799;"></i> VACUNAMED (3 sedes)</span>
+                <span><i class="fas fa-map-marker-alt" style="color:#2c6e2c;"></i> U.E. La Presentación</span>
+                <span><i class="fas fa-info-circle" style="color:#DB3109;"></i> Click en marcador → "Cómo llegar"</span>
+            </div>
+            <div style="padding: 0 16px 16px; margin-top: 18px;">
+                <button class="btn-fundebip" id="btnRegresar" style="width:100%; justify-content:center; background-color:#1E70BF !important; background-image:none !important; border: 1px solid #1E70BF !important; color:#ffffff !important; margin-top: 16px; border-radius: 40px;">
+                    <i class="fas fa-arrow-left"></i> Regresar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenedor unificado: TABS - PRIMERO GRÁFICO, LUEGO TABLA -->
+    <div class="unified-chart-container">
+        <div class="chart-tabs">
+            <button class="tab-btn active" data-tab="grafico"><i class="fas fa-chart-bar"></i> Descuentos por Servicio</button>
+            <button class="tab-btn" data-tab="tabla"><i class="fas fa-table"></i> Tabla de Vacunas</button>
+        </div>
+        <div class="chart-panel">
+            <div id="graficoContainer" style="width:100%; display: block;">
+                <canvas id="chartDescuentos"></canvas>
+            </div>
+            <div id="tablaContainer" style="width:100%; display: none;">
+                <table class="tabla-vacunas" id="tablaVacunas">
+                    <thead><tr><th>Servicio</th><th>Precio regular</th><th>Precio convenio</th><th>Dto.</th></tr></thead>
+                    <tbody id="tablaVacunasBody"></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="footer-chart" id="footerChart">
+            <i class="fas fa-chart-simple"></i> Datos del Convenio VACUNAMED · Descuentos exclusivos para servidores policiales
+        </div>
+    </div>
+
+    <div class="footer-main">
+        <i class="fas fa-handshake"></i> Convenios activos FUNDEBIP · Vacunación preventiva + Educación de calidad · Beneficios exclusivos para servidores policiales y sus familias
+    </div>
+</div>
+
+<script>
+    Chart.register(ChartDataLabels);
+    Chart.defaults.set('plugins.datalabels', {
+        font: { weight: 'bold', size: 10 },
+        anchor: 'end',
+        align: 'top',
+        offset: 4,
+        color: '#1a1a1a'
+    });
+
+    // Datos de vacunas
+    const vacunasData = [
+        { nombre: "VPH", regular: "130.32", convenio: "105.00", dto: "19.4%" },
+        { nombre: "Neumonía", regular: "72.00", convenio: "60.00", dto: "16.7%" },
+        { nombre: "Hepatitis A", regular: "25.00", convenio: "20.00", dto: "20%" },
+        { nombre: "Hepatitis A+B", regular: "25.00", convenio: "20.00", dto: "20%" },
+        { nombre: "Influenza", regular: "20.00", convenio: "16.00", dto: "20%" },
+        { nombre: "Megadosis Vitamina C", regular: "25.00", convenio: "20.00", dto: "20%" },
+        { nombre: "Consulta pediátrica", regular: "25.00", convenio: "15.00", dto: "40%" }
+    ];
+
+    const serviciosDescuentos = ['VPH', 'Neumonía', 'Hepatitis A', 'Influenza', 'Megadosis C', 'Consulta Pediátrica'];
+    const valoresDescuentos = [19.43, 16.66, 20, 20, 20, 40];
+
+    // Puntos de atención
+    const puntosVacunas = [
+        { nombre: "Matriz - La Y", direccion: "Av. América N39-231 y San Francisco", horario: "Lun-Vie 08:30-18:30, Sáb 08:30-17:00", telefono: "0993564906", coords: [-0.1835, -78.4985] },
+        { nombre: "Sucursal Sur - Chimbacalle", direccion: "Juan Borgoñon 58219 y Rodrigo de Ocampo", horario: "Lun-Vie 08:30-17:00", telefono: "2444-938", coords: [-0.235, -78.525] },
+        { nombre: "Sucursal Calderón", direccion: "Lizardo Becerra N1-99 entre 9 de Agosto y Carapungo", horario: "Lun-Vie 08:30-17:00, Sáb 08:30-13:30", telefono: "2256-918", coords: [-0.088, -78.437] }
+    ];
+    const puntoEducacion = { nombre: "U.E. 'La Presentación'", direccion: "Miraflores, José de Armero Oe7-10 y Santa Rosa", telefono: "022223456", coords: [-0.206, -78.514] };
+
+    let map, markersVacunas = [], markerEducacion = null;
+    let chartDescuentos;
+
+    function initMap() {
+        map = L.map('map').setView([-0.1835, -78.4985], 13);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap',
+            maxZoom: 18
+        }).addTo(map);
+        cargarMarcadores('ambos');
+    }
+
+    function cargarMarcadores(filtro) {
+        markersVacunas.forEach(m => map.removeLayer(m));
+        if (markerEducacion) map.removeLayer(markerEducacion);
+        markersVacunas = [];
+        
+        const iconVacunas = L.divIcon({
+            html: '<i class="fas fa-map-marker-alt" style="font-size: 26px; color: #1e5799; text-shadow: 0 0 2px white;"></i>',
+            iconSize: [26, 26],
+            className: 'custom-marker-icon',
+            popupAnchor: [0, -13]
+        });
+        
+        const iconEducacion = L.divIcon({
+            html: '<i class="fas fa-map-marker-alt" style="font-size: 26px; color: #2c6e2c; text-shadow: 0 0 2px white;"></i>',
+            iconSize: [26, 26],
+            className: 'custom-marker-icon',
+            popupAnchor: [0, -13]
+        });
+        
+        if (filtro === 'vacunas' || filtro === 'ambos') {
+            puntosVacunas.forEach(punto => {
+                const marker = L.marker(punto.coords, { icon: iconVacunas }).addTo(map);
+                const popupContent = `
+                    <div style="min-width:220px;">
+                        <b>💉 ${punto.nombre}</b><br>
+                        📍 ${punto.direccion}<br>
+                        🕒 ${punto.horario}<br>
+                        📞 ${punto.telefono}<br>
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=${punto.coords[0]},${punto.coords[1]}" target="_blank" class="map-popup-link" style="color:#DB3109; font-weight:bold; text-decoration:none; display:inline-block; margin-top:5px;">🧭 Cómo llegar →</a>
+                    </div>
+                `;
+                marker.bindPopup(popupContent);
+                // Solo clic para abrir, nada de hover
+                markersVacunas.push(marker);
+            });
+        }
+        
+        if (filtro === 'educacion' || filtro === 'ambos') {
+            markerEducacion = L.marker(puntoEducacion.coords, { icon: iconEducacion }).addTo(map);
+            const popupContent = `
+                <div style="min-width:220px;">
+                    <b>🎓 ${puntoEducacion.nombre}</b><br>
+                    📍 ${puntoEducacion.direccion}<br>
+                    🎓 30% descuento en matrícula y pensión<br>
+                    📞 ${puntoEducacion.telefono}<br>
+                    <a href="https://www.google.com/maps/dir/?api=1&destination=${puntoEducacion.coords[0]},${puntoEducacion.coords[1]}" target="_blank" class="map-popup-link" style="color:#2c6e2c; font-weight:bold; text-decoration:none; display:inline-block; margin-top:5px;">🧭 Cómo llegar →</a>
+                </div>
+            `;
+            markerEducacion.bindPopup(popupContent);
+        }
+    }
+
+    function verTodosPuntos() {
+        const bounds = [];
+        if (markersVacunas.length > 0) markersVacunas.forEach(m => bounds.push(m.getLatLng()));
+        if (markerEducacion) bounds.push(markerEducacion.getLatLng());
+        if (bounds.length > 0) map.fitBounds(bounds);
+        else map.setView([-0.1835, -78.4985], 13);
+    }
+
+    function inicioMapa() { map.setView([-0.1835, -78.4985], 13); }
+
+    function renderTablaVacunas(mostrar) {
+        const tbody = document.getElementById('tablaVacunasBody');
+        if (!mostrar) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999;">Filtro no aplica a este convenio</td></tr>';
+            return;
+        }
+        let html = '';
+        vacunasData.forEach(v => {
+            html += `<tr>
+                        <td><strong>${v.nombre}</strong></td>
+                        <td>$${v.regular}</td>
+                        <td style="color:#2E7D32; font-weight:bold;">$${v.convenio}</td>
+                        <td><span class="badge-descuento">${v.dto}</span></td>
+                     </tr>`;
+        });
+        tbody.innerHTML = html;
+    }
+
+    function actualizarTodo(filtro) {
+        const cardVacunas = document.getElementById('cardVacunas');
+        const cardEducacion = document.getElementById('cardEducacion');
+        const unifiedContainer = document.querySelector('.unified-chart-container');
+        const kpiConvenios = document.getElementById('kpiValorConvenios');
+        const kpiDescuento = document.getElementById('kpiValorDescuento');
+        const kpiEducacion = document.getElementById('kpiValorEducacion');
+        const kpiGratis = document.getElementById('kpiValorGratis');
+        const kpiVigencia = document.getElementById('kpiValorVigencia');
+        
+        if (filtro === 'vacunas') {
+            cardVacunas.classList.remove('filtrado-oculto');
+            cardEducacion.classList.add('filtrado-oculto');
+            unifiedContainer.style.display = 'flex';
+            renderTablaVacunas(true);
+            kpiConvenios.innerText = '1';
+            kpiDescuento.innerText = '22.7%';
+            kpiEducacion.innerText = '0%';
+            kpiGratis.innerText = '2 x 20';
+            kpiVigencia.innerText = '2026-2028';
+            if (chartDescuentos) {
+                chartDescuentos.data.datasets[0].data = valoresDescuentos;
+                chartDescuentos.update();
+            }
+        } 
+        else if (filtro === 'educacion') {
+            cardVacunas.classList.add('filtrado-oculto');
+            cardEducacion.classList.remove('filtrado-oculto');
+            unifiedContainer.style.display = 'none';
+            renderTablaVacunas(false);
+            kpiConvenios.innerText = '1';
+            kpiDescuento.innerText = '30%';
+            kpiEducacion.innerText = '30%';
+            kpiGratis.innerText = '0';
+            kpiVigencia.innerText = '2026-2031';
+        } 
+        else {
+            cardVacunas.classList.remove('filtrado-oculto');
+            cardEducacion.classList.remove('filtrado-oculto');
+            unifiedContainer.style.display = 'flex';
+            renderTablaVacunas(true);
+            kpiConvenios.innerText = '2';
+            kpiDescuento.innerText = '23%';
+            kpiEducacion.innerText = '30%';
+            kpiGratis.innerText = '2 x 20';
+            kpiVigencia.innerText = '2026-2031';
+            if (chartDescuentos) {
+                chartDescuentos.data.datasets[0].data = valoresDescuentos;
+                chartDescuentos.update();
+            }
+        }
+        cargarMarcadores(filtro);
+    }
+
+    function initChart() {
+        const ctx = document.getElementById('chartDescuentos').getContext('2d');
+        chartDescuentos = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: serviciosDescuentos,
+                datasets: [{
+                    label: '% de descuento',
+                    data: valoresDescuentos,
+                    backgroundColor: '#7D7877',
+                    borderRadius: 10,
+                    borderWidth: 2,
+                    borderColor: '#DB3109',
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'top',
+                        formatter: (v) => v + '%',
+                        font: { weight: 'bold', size: 10 },
+                        backgroundColor: 'rgba(255,255,255,0.8)',
+                        padding: { left: 4, right: 4, top: 2, bottom: 2 },
+                        borderRadius: 8
+                    }
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { position: 'top', labels: { font: { size: 10 } } },
+                    tooltip: { callbacks: { label: (ctx) => `${ctx.raw}% de descuento` } }
+                },
+                scales: {
+                    y: { beginAtZero: true, max: 45, title: { display: true, text: 'Porcentaje de descuento (%)', color: '#7D7877', font: { size: 10 } }, ticks: { callback: (v) => v + '%', font: { size: 9 } } },
+                    x: { ticks: { font: { size: 9 } } }
+                }
+            }
+        });
+    }
+
+    function setupTabs() {
+        const tabs = document.querySelectorAll('.tab-btn');
+        const tablaContainer = document.getElementById('tablaContainer');
+        const graficoContainer = document.getElementById('graficoContainer');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const target = tab.getAttribute('data-tab');
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                if (target === 'grafico') {
+                    graficoContainer.style.display = 'block';
+                    tablaContainer.style.display = 'none';
+                    if (chartDescuentos) chartDescuentos.update();
+                } else {
+                    graficoContainer.style.display = 'none';
+                    tablaContainer.style.display = 'block';
+                }
+            });
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initMap();
+        initChart();
+        renderTablaVacunas(true);
+        setupTabs();
+        
+        document.getElementById('selectConvenio').addEventListener('change', (e) => {
+            actualizarTodo(e.target.value);
+        });
+        
+        document.getElementById('btnVerTodos').addEventListener('click', verTodosPuntos);
+        document.getElementById('btnInicioMapa').addEventListener('click', inicioMapa);
+        document.getElementById('btnRegresar').addEventListener('click', () => history.back());
+        
+        actualizarTodo('ambos');
+        setTimeout(() => verTodosPuntos(), 500);
+    });
+</script>
+</body>
+</html>

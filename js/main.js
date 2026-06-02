@@ -281,11 +281,10 @@ function initCarouselSystem() {
             "img/autoges/amplificador.jpeg"
         ],
         eventos: [
-            "img/eventos/lentes.jpeg",
-            "img/eventos/entrega_kits.jpeg",
-            "img/eventos/manifestaciones.jpeg",
-            "img/eventos/colada.jpeg",
-            "img/eventos/navidad.jpeg"
+            "img/eventos/mujer.jpeg",
+            "img/eventos/02_marzo.jpeg",
+            "img/eventos/madre.jpeg",
+            "img/eventos/niño.jpeg"
         ]
     };
     
@@ -297,6 +296,8 @@ function initCarouselSystem() {
     const carouselPrev = document.getElementById('carouselPrev');
     const carouselNext = document.getElementById('carouselNext');
     const closeCarouselModal = document.getElementById('closeCarouselModal');
+    const carouselZoomInBtn = document.getElementById('carouselZoomInBtn');
+    const carouselZoomOutBtn = document.getElementById('carouselZoomOutBtn');
     const currentSlide = document.getElementById('currentSlide');
     const totalSlides = document.getElementById('totalSlides');
     
@@ -305,6 +306,10 @@ function initCarouselSystem() {
     let currentAlbum = null;
     let currentIndex = 0;
     let isTransitioning = false;
+    let currentScale = 1;
+    const SCALE_STEP = 0.15;
+    const MAX_SCALE = 2.0;
+    const MIN_SCALE = 0.5;
     
     // Configurar botones que abren carruseles
     document.querySelectorAll('[data-album]').forEach(btn => {
@@ -343,7 +348,7 @@ function initCarouselSystem() {
             const slide = document.createElement('div');
             slide.className = 'carousel-slide';
             slide.innerHTML = `
-                <img src="${imgSrc}" 
+                <img class="carousel-image" src="${imgSrc}" 
                      alt="Imagen ${index + 1}" 
                      loading="lazy"
                      onerror="this.onerror=null; this.src='https://via.placeholder.com/800x600?text=Imagen+no+disponible'">
@@ -367,8 +372,14 @@ function initCarouselSystem() {
         carouselModal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
         
+        // reset zoom
+        currentScale = 1;
+
         // Actualizar posición
         updateCarouselPosition();
+
+        // aplicar escala inicial
+        applyScale();
     }
     
     // Navegación
@@ -377,7 +388,10 @@ function initCarouselSystem() {
         
         isTransitioning = true;
         currentIndex = index;
+        // reset zoom al cambiar de slide
+        currentScale = 1;
         updateCarouselPosition();
+        applyScale();
         updateCounters();
         updateDots();
         
@@ -431,6 +445,66 @@ function initCarouselSystem() {
     
     if (carouselNext) {
         carouselNext.addEventListener('click', nextSlide);
+    }
+
+    // Zoom functions
+    function applyScale() {
+        if (!carouselTrack) return;
+        const slides = carouselTrack.querySelectorAll('.carousel-slide');
+        slides.forEach((slide, idx) => {
+            const img = slide.querySelector('.carousel-image');
+            if (!img) return;
+            if (idx === currentIndex) {
+                img.style.transform = `scale(${currentScale})`;
+            } else {
+                img.style.transform = 'scale(1)';
+            }
+        });
+    }
+
+    function zoomIn() {
+        currentScale = Math.min(MAX_SCALE, +(currentScale + SCALE_STEP).toFixed(2));
+        applyScale();
+    }
+
+    function zoomOut() {
+        currentScale = Math.max(MIN_SCALE, +(currentScale - SCALE_STEP).toFixed(2));
+        applyScale();
+    }
+
+    // conectar botones de lupa
+    if (carouselZoomInBtn) carouselZoomInBtn.addEventListener('click', function(e){ e.stopPropagation(); zoomIn(); });
+    if (carouselZoomOutBtn) carouselZoomOutBtn.addEventListener('click', function(e){ e.stopPropagation(); zoomOut(); });
+
+    // doble click para resetear zoom o hacer zoom rápido
+    if (carouselTrack) {
+        carouselTrack.addEventListener('dblclick', function(e) {
+            const img = carouselTrack.querySelectorAll('.carousel-slide')[currentIndex]?.querySelector('.carousel-image');
+            if (!img) return;
+            if (currentScale === 1) {
+                currentScale = Math.min(MAX_SCALE, 1.8);
+            } else {
+                currentScale = 1;
+            }
+            applyScale();
+        });
+    }
+
+    // Zoom con rueda del mouse (scroll)
+    if (carouselTrack) {
+        carouselTrack.addEventListener('wheel', function(e) {
+            if (carouselModal.style.display !== 'flex' || !currentAlbum) return;
+            
+            e.preventDefault();
+            
+            // Scroll hacia arriba = zoom in (deltaY negativo)
+            // Scroll hacia abajo = zoom out (deltaY positivo)
+            if (e.deltaY < 0) {
+                zoomIn();
+            } else if (e.deltaY > 0) {
+                zoomOut();
+            }
+        }, { passive: false });
     }
     
     // Cerrar modal

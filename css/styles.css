@@ -1565,6 +1565,12 @@ footer::before {
     animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Usar flex para que el header ocupe su espacio y el body llene el resto sin cálculos fijos */
+.modal-content {
+    display: flex;
+    flex-direction: column;
+}
+
 @keyframes slideUp {
     from {
         opacity: 0;
@@ -1589,6 +1595,20 @@ footer::before {
     margin: 0;
 }
 
+/* Alinear acciones del header (zoom controls + close button) */
+.modal-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Zoom controls en el header */
+.modal-header-actions .carousel-zoom-controls {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
 .close-modal {
     background: rgba(255, 255, 255, 0.1);
     border: none;
@@ -1609,13 +1629,13 @@ footer::before {
 }
 
 .modal-body {
-    height: calc(100% - 80px);
-    padding: 0; /* Cambiado: sin padding para que imagen ocupe todo */
-    overflow: hidden; /* Cambiado: hidden para evitar scroll */
-    display: flex; /* Nuevo: flex para centrar contenido */
-    align-items: center; /* Nuevo: centrar verticalmente */
-    justify-content: center; /* Nuevo: centrar horizontalmente */
-    background: var(--color-blanco); /* Nuevo: fondo blanco */
+    flex: 1 1 auto; /* Llenar el espacio restante del modal */
+    padding: 0;
+    overflow: auto; /* Permitir scroll si la imagen no cabe totalmente */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-blanco);
 }
 
 .modal-body img {
@@ -1630,8 +1650,8 @@ footer::before {
 /* Para iframes (videos) mantén el estilo original */
 .modal-body iframe {
     width: 100%;
-    height: 100%;
-    object-fit: contain;
+    aspect-ratio: 16 / 9; /* proporción estándar */
+    height: auto;
     border-radius: var(--radio-md);
 }
 
@@ -1662,6 +1682,7 @@ footer::before {
     width: 100%;
     height: 100%;
     overflow: hidden;
+    padding-bottom: 120px; /* Reservar espacio para dots/contador/controles inferiores */
 }
 
 .carousel-track {
@@ -1680,19 +1701,20 @@ footer::before {
 }
 
 .carousel-slide img {
-    max-width: 100%;
-    max-height: 100%;
+    max-width: 95%; /* Hacer la imagen un poco más grande dentro del slide */
+    max-height: calc(100% - 20px);
     object-fit: contain;
     border-radius: var(--radio-md);
+    transition: transform 0.25s ease, max-width 0.25s ease;
 }
 
 .carousel-nav {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.55); /* Fondo oscuro para contraste sobre contenido claro */
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     color: var(--color-blanco);
     width: 60px;
     height: 60px;
@@ -1703,7 +1725,7 @@ footer::before {
     justify-content: center;
     font-size: 1.5rem;
     transition: var(--transicion-rapida);
-    z-index: 10;
+    z-index: 9999; /* Asegurar por encima de otros elementos */
 }
 
 .carousel-nav:hover {
@@ -1754,6 +1776,73 @@ footer::before {
     border-radius: var(--radio-full);
     font-size: 0.9rem;
     font-weight: 600;
+    z-index: 20;
+}
+
+/* Posicionar contenedor derecho (zoom + contador) para mayor control */
+.carousel-right-controls {
+    position: absolute;
+    bottom: 30px;
+    right: 30px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    z-index: 20;
+}
+
+/* Zoom controls (lupa) */
+
+.carousel-zoom-controls {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.zoom-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.15);
+    color: var(--color-blanco);
+    border: 1px solid rgba(255,255,255,0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.12s ease, background 0.12s ease;
+    z-index: 25;
+}
+
+.zoom-btn:hover {
+    transform: scale(1.05);
+    background: rgba(255,255,255,0.25);
+}
+
+/* Asegurar que las imágenes respondan al transform de zoom sin salirse */
+.carousel-image {
+    display: block;
+    transform-origin: center center;
+    will-change: transform;
+}
+
+/* Asegurar que el contenedor de imagen en el modal centra y muestra completamente la imagen */
+.modal-image-fullview {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.modal-image-fullview img,
+.modal-body img.full-image-view {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: block;
 }
 
 /* ============================================

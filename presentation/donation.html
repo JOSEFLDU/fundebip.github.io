@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>FUNDEBIP - Donación Sillas de Ruedas | Etapas 3 y 4</title>
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', 'Segoe UI', 'Roboto', system-ui, sans-serif;
+            background: linear-gradient(145deg, #f0f2f5 0%, #e2e6ea 100%);
+            padding: 20px 16px;
+        }
+        :root {
+            --fundebip-red: #DB3109;
+            --fundebip-red-dark: #B82A07;
+            --fundebip-gray: #7D7877;
+            --fundebip-gray-dark: #5D5A59;
+            --shadow-lg: 0 20px 40px -12px rgba(0, 0, 0, 0.15);
+            --shadow-sm: 0 6px 14px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 25px 35px -12px rgba(219, 49, 9, 0.25);
+        }
+        .dashboard { max-width: 1800px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+        .kpi-superior { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; }
+        .kpi-superior-card {
+            background: white; border-radius: 24px; padding: 14px 8px; text-align: center;
+            box-shadow: var(--shadow-sm); transition: all 0.3s ease;
+            border-top: 5px solid var(--fundebip-red); border-bottom: 1px solid rgba(125,120,119,0.2);
+        }
+        .kpi-superior-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-hover); }
+        .kpi-superior-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #2C3E50; margin-bottom: 6px; }
+        .kpi-superior-valor { font-size: 28px; font-weight: 800; color: #000000; margin: 4px 0; letter-spacing: -1px; }
+        .kpi-superior-sub { font-size: 11px; font-weight: 600; color: var(--fundebip-gray-dark); background: rgba(125,120,119,0.1); display: inline-block; padding: 3px 10px; border-radius: 30px; }
+        .kpi-zero { opacity: 0.6; filter: grayscale(0.2); }
+        .main-layout { display: grid; grid-template-columns: 0.8fr 0.9fr 1.2fr; gap: 20px; align-items: start; }
+        .map-panel { background: white; border-radius: 28px; box-shadow: var(--shadow-lg); overflow: hidden; border: 1px solid rgba(125,120,119,0.15); }
+        #map { height: 38vh; width: 100%; background: #e9f0f5; min-height: 300px; }
+        .map-controls { padding: 10px 12px; background: linear-gradient(135deg, var(--fundebip-gray-dark), #4a4746); display: flex; gap: 8px; flex-wrap: wrap; }
+        .btn-fundebip { background: linear-gradient(135deg, var(--fundebip-red), var(--fundebip-red-dark)); color: white; border: none; padding: 6px 14px; border-radius: 40px; cursor: pointer; font-weight: 700; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 5px; }
+        .btn-secondary { background: linear-gradient(135deg, var(--fundebip-gray), var(--fundebip-gray-dark)); }
+        select, .etapa-selector { padding: 6px 12px; border-radius: 40px; border: none; background: white; font-weight: 500; font-size: 0.7rem; flex: 1; cursor: pointer; }
+        .central-table-panel { background: white; border-radius: 28px; box-shadow: var(--shadow-lg); overflow-y: auto; max-height: 75vh; border: 1px solid rgba(125,120,119,0.15); display: flex; flex-direction: column; }
+        .header-fundebip { background: linear-gradient(135deg, var(--fundebip-gray-dark), var(--fundebip-gray), var(--fundebip-red)); color: white; padding: 14px 12px; text-align: center; border-radius: 28px 28px 0 0; }
+        .header-fundebip h1 { font-size: 1.5rem; font-weight: 800; }
+        .header-fundebip h2 { font-size: 0.65rem; font-weight: 500; }
+        .ejecucion-section { padding: 12px; background: #fafbfc; border-bottom: 1px solid rgba(125,120,119,0.15); }
+        .ejecucion-title { font-size: 0.7rem; font-weight: 800; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; border-left: 4px solid var(--fundebip-red); padding-left: 10px; }
+        .filtro-etapa { background: #f0f2f5; padding: 12px 12px 8px 12px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid rgba(125,120,119,0.15); }
+        .filtro-etapa label { font-weight: 800; font-size: 0.75rem; color: var(--fundebip-gray-dark); }
+        .etapa-selector { flex: 0 0 auto; width: 230px; background: white; border: 1px solid #ddd; font-size: 0.8rem; padding: 6px 16px; }
+        .presupuesto-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
+        .presupuesto-card { background: white; border-radius: 16px; padding: 8px 4px; text-align: center; box-shadow: var(--shadow-sm); }
+        .presupuesto-label { font-size: 8px; font-weight: 700; color: var(--fundebip-gray); }
+        .presupuesto-valor { font-size: 13px; font-weight: 800; }
+        .tabla-container { padding: 10px 12px 14px; flex: 1; }
+        .tabla-container h3 { font-size: 0.7rem; font-weight: 700; margin-bottom: 8px; border-left: 4px solid var(--fundebip-red); padding-left: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 10px; border-radius: 14px; overflow: hidden; }
+        th { background: linear-gradient(135deg, #5D5A59, #3D3A39); color: white; padding: 7px 5px; font-weight: 700; font-size: 0.65rem; }
+        td { padding: 6px 5px; border-bottom: 1px solid #eef2f5; cursor: pointer; font-weight: 500; }
+        tr:hover td { filter: brightness(0.96); background: rgba(219, 49, 9, 0.05); }
+        tr.seleccionada td { background: rgba(219, 49, 9, 0.2); border-left: 3px solid var(--fundebip-red); font-weight: 700; }
+        .total-row { background: #e9ecef; font-weight: 800; border-top: 2px solid var(--fundebip-red); }
+        .total-row td { text-align: center; font-weight: 800; }
+        .unified-chart-container { background: white; border-radius: 28px; box-shadow: var(--shadow-lg); border: 1px solid rgba(125,120,119,0.15); overflow: hidden; display: flex; flex-direction: column; }
+        .chart-tabs { display: flex; background: #f8f9fa; border-bottom: 2px solid rgba(125,120,119,0.2); padding: 0 20px; gap: 8px; }
+        .tab-btn { background: transparent; border: none; padding: 14px 24px; font-size: 0.85rem; font-weight: 700; color: var(--fundebip-gray-dark); cursor: pointer; transition: all 0.2s ease; border-bottom: 3px solid transparent; display: flex; align-items: center; gap: 10px; }
+        .tab-btn i { font-size: 1rem; color: var(--fundebip-gray); }
+        .tab-btn.active { color: var(--fundebip-red); border-bottom-color: var(--fundebip-red); }
+        .chart-panel { padding: 20px; min-height: 420px; display: flex; align-items: center; justify-content: center; }
+        .chart-panel canvas { max-height: 360px !important; width: 100% !important; height: auto !important; }
+        .footer-chart, .footer { background: var(--fundebip-gray-dark); color: rgba(255,255,255,0.8); text-align: center; padding: 8px; font-size: 8px; }
+        .footer { border-radius: 0 0 28px 28px; }
+        @media (max-width: 1100px) { .kpi-superior { grid-template-columns: repeat(3, 1fr); } .main-layout { grid-template-columns: 1fr; gap: 20px; } }
+        .custom-tooltip { background: var(--fundebip-gray-dark); color: white; border-radius: 20px; padding: 3px 10px; font-size: 10px; }
+        .numero-marcador { background: transparent; font-weight: 900; text-shadow: 0px 0px 2px white; }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <!-- KPI superiores -->
+    <div class="kpi-superior">
+        <div class="kpi-superior-card"><div class="kpi-superior-label">TOTAL SILLAS</div><div class="kpi-superior-valor" id="kpiTotalSillas">65</div><div class="kpi-superior-sub">Ene - May 2026</div></div>
+        <div class="kpi-superior-card" id="cardEtapa3"><div class="kpi-superior-label">ETAPA 3</div><div class="kpi-superior-valor" id="kpiEtapa3">28</div><div class="kpi-superior-sub">20 Traslado · 8 Postural</div></div>
+        <div class="kpi-superior-card" id="cardEtapa4"><div class="kpi-superior-label">ETAPA 4</div><div class="kpi-superior-valor" id="kpiEtapa4">37</div><div class="kpi-superior-sub">30 Traslado · 7 Postural</div></div>
+        <div class="kpi-superior-card"><div class="kpi-superior-label">TRASLADO</div><div class="kpi-superior-valor" id="kpiTraslado">50</div><div class="kpi-superior-sub">Según filtro</div></div>
+        <div class="kpi-superior-card"><div class="kpi-superior-label">POSTURALES</div><div class="kpi-superior-valor" id="kpiPosturales">15</div><div class="kpi-superior-sub">Según filtro</div></div>
+        <div class="kpi-superior-card"><div class="kpi-superior-label">COBERTURA</div><div class="kpi-superior-valor" id="kpiCobertura">13</div><div class="kpi-superior-sub">Provincias + Bodega</div></div>
+    </div>
+
+    <div class="main-layout">
+        <!-- MAPA -->
+        <div class="map-panel">
+            <div id="map"></div>
+            <div class="map-controls">
+                <select id="buscadorProvincia"><option value="">🔍 Buscar provincia...</option></select>
+                <button class="btn-fundebip" id="btnBuscar"><i class="fas fa-location-dot"></i> Ir</button>
+                <button class="btn-fundebip btn-secondary" id="btnInicio"><i class="fas fa-home"></i> Inicio</button>
+            </div>
+            <div style="padding: 0 16px 16px; margin-top: 18px;">
+                <button class="btn-fundebip" id="btnRegresar" style="width:100%; justify-content:center; background-color:#1E70BF !important; background-image:none !important; border: 1px solid #1E70BF !important; color:#ffffff !important; margin-top: 16px; border-radius: 40px;">
+                    <i class="fas fa-arrow-left"></i> Regresar
+                </button>
+            </div>
+        </div>
+
+        <!-- TABLA CENTRAL CON FILTRO ETAPA -->
+        <div class="central-table-panel">
+            <div class="header-fundebip">
+                <h1>FUNDEBIP</h1>
+                <h2>DONACIÓN SILLAS DE RUEDAS · ENERO - MAYO 2026 · ETAPA 3 Y 4</h2>
+            </div>
+            <div class="filtro-etapa">
+                <label><i class="fas fa-filter"></i> FILTRAR POR ETAPA:</label>
+                <select id="selectEtapa" class="etapa-selector">
+                    <option value="ambas">📊 ETAPA 3 Y 4 (TOTAL 65 SILLAS)</option>
+                    <option value="etapa3">🚀 ETAPA 3 (28 sillas)</option>
+                    <option value="etapa4">✨ ETAPA 4 (37 sillas)</option>
+                </select>
+            </div>
+            <div class="ejecucion-section">
+                <div class="ejecucion-title"><i class="fas fa-wheelchair"></i> ADQUISICIÓN POR TIPO DE SILLA</div>
+                <div class="presupuesto-grid">
+                    <div class="presupuesto-card"><div class="presupuesto-label">SILLAS TRASLADO</div><div class="presupuesto-valor" id="totalTraslado">50</div></div>
+                    <div class="presupuesto-card"><div class="presupuesto-label">SILLAS POSTURALES</div><div class="presupuesto-valor" id="totalPosturales">15</div></div>
+                    <div class="presupuesto-card"><div class="presupuesto-label">ETAPA 3 TOTAL</div><div class="presupuesto-valor" id="totalEtapa3Resumen">28</div></div>
+                    <div class="presupuesto-card"><div class="presupuesto-label">ETAPA 4 TOTAL</div><div class="presupuesto-valor" id="totalEtapa4Resumen">37</div></div>
+                </div>
+            </div>
+            <div class="tabla-container">
+                <h3><i class="fas fa-map-marked-alt"></i> DONACIONES POR PROVINCIA (ordenado de mayor a menor)</h3>
+                <table id="tablaAyudas">
+                    <thead><tr><th>PROVINCIA / UBICACIÓN</th><th style="text-align:center">TOTAL SILLAS</th></tr></thead>
+                    <tbody id="tablaBody"></tbody>
+                </table>
+            </div>
+            <div class="footer"><i class="fas fa-calendar-alt"></i> Enero - Mayo 2026 · FUNDEBIP · Inclusión y Movilidad</div>
+        </div>
+
+        <!-- GRÁFICOS CON TABS -->
+        <div class="unified-chart-container">
+            <div class="chart-tabs">
+                <button class="tab-btn active" data-tab="tab1"><i class="fas fa-chart-bar"></i> Traslado vs Posturales</button>
+                <button class="tab-btn" data-tab="tab2"><i class="fas fa-chart-line"></i> Comparativa Etapa 3 vs Etapa 4</button>
+            </div>
+            <div class="chart-panel">
+                <canvas id="chartTipoSilla" style="display: block;"></canvas>
+                <canvas id="chartComparativaEtapas" style="display: none;"></canvas>
+            </div>
+            <div class="footer-chart" id="footerChartText"><i class="fas fa-wheelchair"></i> Total: 50 Traslado · 15 Posturales = 65 sillas</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    Chart.register(ChartDataLabels);
+    Chart.defaults.set('plugins.datalabels', {
+        font: { weight: 'bold', size: 13 },
+        anchor: 'end',
+        align: 'top',
+        offset: 8,
+        color: '#1a1a1a'
+    });
+
+    // ======================== DATOS ========================
+    // ETAPA 3 (28 sillas)
+    const etapa3DataRaw = [
+        { provincia: "GUAYAS", total: 4 },
+        { provincia: "MANABI", total: 2 },
+        { provincia: "PICHINCHA", total: 7 },
+        { provincia: "CHIMBORAZO", total: 2 },
+        { provincia: "ESMERALDAS", total: 4 },
+        { provincia: "COTOPAXI", total: 5 },
+        { provincia: "CARCHI", total: 1 },
+        { provincia: "IMBABURA", total: 1 },
+        { provincia: "LOJA", total: 2 }
+    ];
+    // ETAPA 4 (37 sillas) - incluye bodega stock 10
+    const etapa4DataRaw = [
+        { provincia: "PICHINCHA", total: 7 },
+        { provincia: "CHIMBORAZO", total: 2 },
+        { provincia: "MANABI", total: 10 },
+        { provincia: "CARCHI", total: 3 },
+        { provincia: "CAÑAR", total: 1 },
+        { provincia: "IMBABURA", total: 1 },
+        { provincia: "GUAYAS", total: 2 },
+        { provincia: "EL ORO", total: 1 },
+        { provincia: "BODEGA FUNDEBIP (STOCK)", total: 10, especial: true }
+    ];
+
+    // Totales por tipo según etapa
+    const TIPOS_ETAPA3 = { traslado: 20, postural: 8, total: 28 };
+    const TIPOS_ETAPA4 = { traslado: 30, postural: 7, total: 37 };
+    const TIPOS_AMBAS = { traslado: 50, postural: 15, total: 65 };
+
+    // Coordenadas para mapa
+    const coordenadas = {
+        'PICHINCHA': [-0.2, -78.5], 'GUAYAS': [-2.2, -79.9], 'MANABI': [-1.0, -80.5], 'CHIMBORAZO': [-1.7, -78.7],
+        'ESMERALDAS': [1.0, -79.6], 'COTOPAXI': [-0.9, -78.8], 'CARCHI': [0.8, -78.0], 'IMBABURA': [0.4, -78.3],
+        'LOJA': [-4.0, -79.2], 'CAÑAR': [-2.5, -79.0], 'EL ORO': [-3.5, -79.9], 'BODEGA FUNDEBIP (STOCK)': [-1.2, -78.8]
+    };
+
+    let map, marcadores = {};
+    let chartTipo, chartComparativa;
+    let currentFilter = 'ambas';
+
+    // Función para ordenar lista de mayor a menor
+    function sortByTotalDesc(list) {
+        return [...list].sort((a, b) => b.total - a.total);
+    }
+
+    function getDataByFilter(filterValue) {
+        if (filterValue === 'etapa3') {
+            const sorted = sortByTotalDesc(etapa3DataRaw);
+            return { list: sorted, total: 28, label: 'ETAPA 3' };
+        }
+        if (filterValue === 'etapa4') {
+            const sorted = sortByTotalDesc(etapa4DataRaw);
+            return { list: sorted, total: 37, label: 'ETAPA 4' };
+        }
+        // ambas: fusionar y ordenar
+        const mapaAcum = new Map();
+        etapa3DataRaw.forEach(item => { mapaAcum.set(item.provincia, (mapaAcum.get(item.provincia)||0) + item.total); });
+        etapa4DataRaw.forEach(item => { mapaAcum.set(item.provincia, (mapaAcum.get(item.provincia)||0) + item.total); });
+        let listaAmbas = Array.from(mapaAcum.entries()).map(([prov, total]) => ({ provincia: prov, total }));
+        listaAmbas = sortByTotalDesc(listaAmbas);
+        return { list: listaAmbas, total: 65, label: 'ETAPA 3 Y 4' };
+    }
+
+    function getTipoDataByFilter(filterValue) {
+        if (filterValue === 'etapa3') return TIPOS_ETAPA3;
+        if (filterValue === 'etapa4') return TIPOS_ETAPA4;
+        return TIPOS_AMBAS;
+    }
+
+    function getTableStyle(value) {
+        if (value >= 10) return 'background: linear-gradient(90deg, #C8E6C9, #66BB6A); font-weight: 800;';
+        if (value >= 5) return 'background: linear-gradient(90deg, #DCEDC8, #AED581);';
+        if (value >= 2) return 'background: linear-gradient(90deg, #FFF9C4, #FFD54F);';
+        return 'background: linear-gradient(90deg, #FFCCBC, #FFAB91);';
+    }
+    
+    function getColorByCantidad(valor) {
+        if (valor >= 10) return '#2E7D32';
+        if (valor >= 5) return '#F9A825';
+        if (valor >= 2) return '#FF8F00';
+        return '#DB3109';
+    }
+
+    // ACTUALIZAR TODO: tabla, KPI, mapa, gráficos
+    function actualizarTodo(filtro) {
+        currentFilter = filtro;
+        const dataObj = getDataByFilter(filtro);
+        const tipoData = getTipoDataByFilter(filtro);
+        const lista = dataObj.list; // ya viene ordenada de mayor a menor
+        
+        // 1. Actualizar tabla (ordenada de mayor a menor)
+        const tbody = document.getElementById('tablaBody');
+        let html = '';
+        for (const item of lista) {
+            const nombre = item.provincia;
+            const valor = item.total;
+            const estiloFila = getTableStyle(valor);
+            const mostrarNombre = nombre === 'BODEGA FUNDEBIP (STOCK)' ? '🏚️ BODEGA FUNDEBIP (Stock)' : nombre;
+            html += `<tr data-provincia="${nombre}" onclick="resaltarProvincia('${nombre}')" style="${estiloFila}">
+                        <td style="font-weight:600;">${mostrarNombre}</td>
+                        <td style="text-align:center; font-weight:bold;">${valor}${nombre === 'BODEGA FUNDEBIP (STOCK)' && filtro === 'etapa4' ? ' ✨' : ''}</td>
+                      </tr>`;
+        }
+        html += `<tr class="total-row"><td style="text-align:center; font-weight:800;">TOTAL ${dataObj.label}</td><td style="text-align:center; font-weight:800;">${dataObj.total}</td></tr>`;
+        tbody.innerHTML = html;
+        
+        // 2. Actualizar select de búsqueda (también ordenado)
+        const selectProv = document.getElementById('buscadorProvincia');
+        selectProv.innerHTML = '<option value="">🔍 Buscar provincia...</option>' +
+            lista.map(item => `<option value="${item.provincia}">${item.provincia === 'BODEGA FUNDEBIP (STOCK)' ? 'Bodega' : item.provincia} (${item.total})</option>`).join('');
+        
+        // 3. Actualizar KPI superiores y tarjetas
+        document.getElementById('kpiTotalSillas').innerText = tipoData.total;
+        document.getElementById('kpiTraslado').innerText = tipoData.traslado;
+        document.getElementById('kpiPosturales').innerText = tipoData.postural;
+        document.getElementById('totalTraslado').innerText = tipoData.traslado;
+        document.getElementById('totalPosturales').innerText = tipoData.postural;
+        
+        // Tarjetas de ETAPA 3 y ETAPA 4: según filtro, la no seleccionada se pone en 0
+        const cardEtapa3 = document.getElementById('cardEtapa3');
+        const cardEtapa4 = document.getElementById('cardEtapa4');
+        const kpiEtapa3 = document.getElementById('kpiEtapa3');
+        const kpiEtapa4 = document.getElementById('kpiEtapa4');
+        const totalEtapa3Resumen = document.getElementById('totalEtapa3Resumen');
+        const totalEtapa4Resumen = document.getElementById('totalEtapa4Resumen');
+        
+        if (filtro === 'etapa3') {
+            kpiEtapa3.innerText = '28';
+            kpiEtapa4.innerText = '0';
+            totalEtapa3Resumen.innerText = '28';
+            totalEtapa4Resumen.innerText = '0';
+            cardEtapa3.style.opacity = '1';
+            cardEtapa4.style.opacity = '0.5';
+        } else if (filtro === 'etapa4') {
+            kpiEtapa3.innerText = '0';
+            kpiEtapa4.innerText = '37';
+            totalEtapa3Resumen.innerText = '0';
+            totalEtapa4Resumen.innerText = '37';
+            cardEtapa4.style.opacity = '1';
+            cardEtapa3.style.opacity = '0.5';
+        } else {
+            kpiEtapa3.innerText = '28';
+            kpiEtapa4.innerText = '37';
+            totalEtapa3Resumen.innerText = '28';
+            totalEtapa4Resumen.innerText = '37';
+            cardEtapa3.style.opacity = '1';
+            cardEtapa4.style.opacity = '1';
+        }
+        
+        // Cobertura
+        const cobertura = lista.length;
+        document.getElementById('kpiCobertura').innerText = cobertura;
+        
+        // 4. Actualizar gráfico de barras (Traslado vs Postural)
+        if (chartTipo) {
+            chartTipo.data.datasets[0].data = [tipoData.traslado, tipoData.postural];
+            chartTipo.update();
+        }
+        
+        // 5. Actualizar gráfico comparativo dinámicamente
+        if (chartComparativa) {
+            let trasladoData = [0, 0];
+            let posturalData = [0, 0];
+            
+            if (filtro === 'etapa3') {
+                trasladoData = [20, 0];
+                posturalData = [8, 0];
+            } else if (filtro === 'etapa4') {
+                trasladoData = [0, 30];
+                posturalData = [0, 7];
+            } else {
+                trasladoData = [20, 30];
+                posturalData = [8, 7];
+            }
+            
+            chartComparativa.data.datasets[0].data = trasladoData;
+            chartComparativa.data.datasets[1].data = posturalData;
+            chartComparativa.update();
+        }
+        
+        // 6. Actualizar footer
+        const footerText = document.getElementById('footerChartText');
+        if (filtro === 'etapa3') footerText.innerHTML = `<i class="fas fa-wheelchair"></i> ETAPA 3 · ${tipoData.traslado} Traslado · ${tipoData.postural} Posturales = ${tipoData.total} sillas`;
+        else if (filtro === 'etapa4') footerText.innerHTML = `<i class="fas fa-wheelchair"></i> ETAPA 4 · ${tipoData.traslado} Traslado · ${tipoData.postural} Posturales = ${tipoData.total} sillas (incluye stock bodega)`;
+        else footerText.innerHTML = `<i class="fas fa-wheelchair"></i> ETAPA 3 Y 4 · ${tipoData.traslado} Traslado · ${tipoData.postural} Posturales = ${tipoData.total} sillas`;
+        
+        // 7. Actualizar mapa
+        if (map) {
+            for (let key in marcadores) {
+                if (marcadores[key]?.marker) map.removeLayer(marcadores[key].marker);
+                if (marcadores[key]?.circle) map.removeLayer(marcadores[key].circle);
+            }
+            marcadores = {};
+            agregarMarcadoresSegunFiltro(lista);
+        }
+    }
+    
+    function agregarMarcadoresSegunFiltro(listaProvincias) {
+        const valoresMap = new Map();
+        listaProvincias.forEach(p => valoresMap.set(p.provincia, p.total));
+        for (const [prov, valor] of valoresMap.entries()) {
+            if (coordenadas[prov]) {
+                const [lat, lon] = coordenadas[prov];
+                const radius = Math.min(Math.sqrt(valor) * 3.8 + 7, 28);
+                const colorFill = getColorByCantidad(valor);
+                const circle = L.circleMarker([lat, lon], {
+                    radius: radius,
+                    fillColor: colorFill,
+                    color: '#3E3A39',
+                    weight: 1.5,
+                    fillOpacity: 0.85
+                }).addTo(map);
+                circle.bindTooltip(`${prov}: ${valor} sillas`, { sticky: true, className: 'custom-tooltip' });
+                circle.on('click', () => resaltarProvincia(prov));
+                
+                const iconHtml = `<div style="font-weight:900; font-size:${valor>20?'13px':'11px'}; color:white; text-align:center; text-shadow: 0px 0px 2px black;">${valor}</div>`;
+                const icon = L.divIcon({ html: iconHtml, iconSize: [radius*1.4, radius*1.4], className: 'numero-marcador' });
+                const marker = L.marker([lat, lon], { icon: icon });
+                marker.on('click', () => resaltarProvincia(prov));
+                marker.addTo(map);
+                marcadores[prov] = { marker, circle, lat, lon, valor };
+            }
+        }
+    }
+    
+    function initMapBase() {
+        map = L.map('map').setView([-1.8, -78.2], 6.2);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap',
+            maxZoom: 12
+        }).addTo(map);
+        const geojsonUrl = 'https://raw.githubusercontent.com/fgochez/Ecuador_shapefile/master/ecuador_provincias.geojson';
+        fetch(geojsonUrl).then(res => res.json()).then(data => {
+            L.geoJSON(data, {
+                style: { weight: 1, opacity: 0.5, color: '#7D7877', fillOpacity: 0.1 },
+                onEachFeature: (feature, layer) => {
+                    let nombre = feature.properties.PROVINCIA || feature.properties.NAME_1;
+                    if(nombre) layer.bindTooltip(nombre, { sticky: true });
+                }
+            }).addTo(map);
+        }).catch(() => {});
+        const inicialData = getDataByFilter('ambas');
+        agregarMarcadoresSegunFiltro(inicialData.list);
+    }
+    
+    function resaltarProvincia(provincia) {
+        if (marcadores[provincia]) {
+            map.setView([marcadores[provincia].lat, marcadores[provincia].lon], 7.8);
+        }
+        document.querySelectorAll('#tablaBody tr').forEach(row => {
+            row.classList.remove('seleccionada');
+            if (row.getAttribute('data-provincia') === provincia) row.classList.add('seleccionada');
+        });
+    }
+    
+    function regresarInicioMapa() {
+        map.setView([-1.8, -78.2], 6.2);
+        document.querySelectorAll('#tablaBody tr').forEach(row => row.classList.remove('seleccionada'));
+    }
+    
+    // Inicializar gráficos
+    function initCharts() {
+        const ctxTipo = document.getElementById('chartTipoSilla').getContext('2d');
+        chartTipo = new Chart(ctxTipo, {
+            type: 'bar',
+            data: {
+                labels: ['Sillas de Traslado', 'Sillas Posturales'],
+                datasets: [{
+                    label: 'Cantidad donada',
+                    data: [50, 15],
+                    backgroundColor: ['#DB3109', '#F57C00'],
+                    borderRadius: 12,
+                    datalabels: { anchor: 'end', align: 'top', formatter: (v) => v, color: '#000', font: { size: 14, weight: 'bold' } }
+                }]
+            },
+            options: { 
+                responsive: true, maintainAspectRatio: true, 
+                plugins: { legend: { position: 'top', labels: { font: { size: 12 } } }, datalabels: { display: true } }, 
+                scales: { y: { beginAtZero: true, title: { display: true, text: 'Número de sillas' }, max: 60, ticks: { stepSize: 10 } } } 
+            }
+        });
+        
+        const ctxComp = document.getElementById('chartComparativaEtapas').getContext('2d');
+        chartComparativa = new Chart(ctxComp, {
+            type: 'bar',
+            data: {
+                labels: ['ETAPA 3', 'ETAPA 4'],
+                datasets: [
+                    { label: 'Sillas Traslado', data: [20, 30], backgroundColor: '#7D7877', borderRadius: 10, datalabels: { anchor: 'end', align: 'top', formatter: (v) => v } },
+                    { label: 'Sillas Posturales', data: [8, 7], backgroundColor: '#DB3109', borderRadius: 10, datalabels: { anchor: 'end', align: 'top', formatter: (v) => v } }
+                ]
+            },
+            options: { 
+                responsive: true, 
+                plugins: { 
+                    tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.raw} sillas` } }, 
+                    legend: { position: 'top' }, 
+                    datalabels: { display: true, font: { size: 12, weight: 'bold' } } 
+                }, 
+                scales: { y: { beginAtZero: true, title: { display: true, text: 'Cantidad de sillas' }, max: 35, ticks: { stepSize: 5 } } } 
+            }
+        });
+    }
+    
+    function setupTabs() {
+        const tabs = document.querySelectorAll('.tab-btn');
+        const canvasTipo = document.getElementById('chartTipoSilla');
+        const canvasComp = document.getElementById('chartComparativaEtapas');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const target = tab.getAttribute('data-tab');
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                if (target === 'tab1') {
+                    canvasTipo.style.display = 'block';
+                    canvasComp.style.display = 'none';
+                    if (chartTipo) chartTipo.update();
+                } else {
+                    canvasTipo.style.display = 'none';
+                    canvasComp.style.display = 'block';
+                    if (chartComparativa) chartComparativa.update();
+                }
+            });
+        });
+    }
+    
+    // Evento cambio de filtro
+    document.getElementById('selectEtapa').addEventListener('change', (e) => {
+        actualizarTodo(e.target.value);
+    });
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        initMapBase();
+        initCharts();
+        setupTabs();
+        actualizarTodo('ambas');
+        
+        document.getElementById('btnBuscar').addEventListener('click', () => {
+            const prov = document.getElementById('buscadorProvincia').value;
+            if (prov && marcadores[prov]) resaltarProvincia(prov);
+            else if(prov) alert("Provincia no disponible en el filtro actual");
+        });
+        document.getElementById('btnInicio').addEventListener('click', regresarInicioMapa);
+        document.getElementById('btnRegresar').addEventListener('click', () => history.back());
+        window.resaltarProvincia = resaltarProvincia;
+    });
+</script>
+</body>
+</html>
