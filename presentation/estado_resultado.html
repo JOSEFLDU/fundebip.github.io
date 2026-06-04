@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>FUNDEBIP - Informe Financiero 2026 | Ene-May</title>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', 'Segoe UI', 'Roboto', system-ui, sans-serif;
+            background: linear-gradient(145deg, #f0f2f5 0%, #e2e6ea 100%);
+            padding: 20px 16px;
+        }
+        :root {
+            --fundebip-red: #DB3109;
+            --fundebip-red-dark: #B82A07;
+            --fundebip-gray: #7D7877;
+            --fundebip-gray-dark: #5D5A59;
+            --fundebip-green: #2E7D32;
+            --fundebip-blue: #1e5799;
+            --fundebip-orange: #F5A623;
+            --shadow-lg: 0 20px 40px -12px rgba(0, 0, 0, 0.15);
+            --shadow-sm: 0 6px 14px rgba(0, 0, 0, 0.08);
+        }
+        .dashboard { max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+        
+        .top-bar {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            background: linear-gradient(135deg, var(--fundebip-gray), var(--fundebip-gray-dark));
+            color: white;
+            border-radius: 28px;
+            padding: 14px 20px;
+            box-shadow: 0 14px 36px -24px rgba(0,0,0,0.4);
+            flex-wrap: wrap;
+        }
+        .btn-back {
+            min-width: 170px;
+            padding: 10px 18px;
+            border-radius: 40px;
+            background-color: #1E70BF !important;
+            border: none;
+            color: #ffffff !important;
+            font-weight: 700;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+        .btn-back:hover { opacity: 0.85; }
+        .filtro-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .filtro-container label { font-weight: 800; font-size: 0.85rem; color: #ffffff; }
+        .selector-filtro {
+            padding: 10px 20px;
+            border-radius: 40px;
+            border: 2px solid var(--fundebip-gray);
+            background: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            min-width: 250px;
+        }
+        
+        .kpi-superior {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+        .kpi-superior-card {
+            background: white; border-radius: 24px; padding: 14px 8px; text-align: center;
+            box-shadow: var(--shadow-sm);
+            border-top: 5px solid var(--fundebip-red);
+            border-bottom: 2px solid var(--fundebip-gray);
+        }
+        .kpi-superior-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #2C3E50; margin-bottom: 6px; }
+        .kpi-superior-valor { font-size: 22px; font-weight: 800; color: #000; margin: 4px 0; }
+        .kpi-superior-sub { font-size: 9px; font-weight: 600; color: var(--fundebip-gray-dark); background: rgba(125,120,119,0.1); display: inline-block; padding: 3px 10px; border-radius: 30px; }
+        .kpi-ejecucion { background: linear-gradient(135deg, #FFF3E0, #FFE0B2); border-top-color: var(--fundebip-orange); }
+        
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .summary-card {
+            background: white;
+            border-radius: 28px;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            border: 1px solid rgba(125,120,119,0.15);
+        }
+        .summary-header {
+            padding: 14px 20px;
+            background: linear-gradient(135deg, var(--fundebip-gray-dark), var(--fundebip-gray));
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .summary-header i { font-size: 1.3rem; }
+        .summary-header h3 { font-size: 0.9rem; font-weight: 700; }
+        .summary-body { padding: 16px 20px; }
+        
+        .ingreso-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eef2f5; }
+        .ingreso-label { font-weight: 600; font-size: 0.8rem; }
+        .ingreso-valor { font-weight: 800; color: var(--fundebip-green); font-size: 0.9rem; }
+        .total-item { border-top: 2px solid var(--fundebip-gray); margin-top: 8px; padding-top: 12px; }
+        .total-item .ingreso-valor { color: var(--fundebip-red); font-size: 1.1rem; }
+        
+        .gastos-tabla-wrapper { overflow-x: auto; padding: 16px 20px; }
+        .gastos-tabla { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+        .gastos-tabla th { 
+            background: linear-gradient(135deg, #5D5A59, #3D3A39); 
+            color: white; padding: 12px 8px; font-size: 0.72rem; font-weight: 700; 
+            text-align: center; 
+        }
+        .gastos-tabla td { padding: 10px 8px; border-bottom: 1px solid #eef2f5; text-align: center; }
+        .gastos-tabla td:first-child { text-align: left; font-weight: 700; background: #f8f9fa; }
+        .total-row { background: #e9ecef; font-weight: 800; }
+        .total-row td { border-top: 2px solid var(--fundebip-red); font-weight: 800; }
+        .porcentaje-badge { background: var(--fundebip-gray); color: white; padding: 2px 8px; border-radius: 20px; font-size: 0.7rem; }
+        
+        .estado-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 16px 20px; }
+        .seccion-estado h4 { font-size: 0.85rem; font-weight: 800; color: var(--fundebip-gray-dark); margin-bottom: 12px; border-bottom: 2px solid var(--fundebip-red); display: inline-block; padding-bottom: 4px; }
+        .item-estado { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eef2f5; font-size: 0.75rem; }
+        .item-estado.total { font-weight: 800; border-top: 2px solid var(--fundebip-gray); margin-top: 8px; padding-top: 12px; font-size: 0.85rem; }
+        .patrimonio-destacado { color: var(--fundebip-green); font-weight: 800; }
+        .resultado-negativo { color: var(--fundebip-red); font-weight: 800; }
+        
+        .progress-bar { background: #e8e8e8; border-radius: 20px; height: 8px; margin-top: 8px; }
+        .progress-fill { background: linear-gradient(90deg, var(--fundebip-red), #F57C00); height: 100%; border-radius: 20px; width: 0%; }
+        
+        .chart-box { background: white; border-radius: 28px; box-shadow: var(--shadow-lg); padding: 16px; border: 1px solid rgba(125,120,119,0.15); }
+        .chart-box h4 { font-size: 0.8rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; border-left: 4px solid var(--fundebip-red); padding-left: 12px; }
+        .chart-box canvas { max-height: 280px; width: 100%; }
+        
+        .footer { background: var(--fundebip-gray-dark); color: rgba(255,255,255,0.8); text-align: center; padding: 12px; font-size: 0.7rem; border-radius: 28px; margin-top: 20px; }
+        
+        @media (max-width: 900px) {
+            .kpi-superior { grid-template-columns: repeat(2, 1fr); }
+            .main-layout { grid-template-columns: 1fr; }
+            .estado-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <div class="top-bar">
+        <button class="btn-back" id="btnRegresar"><i class="fas fa-arrow-left"></i> Regresar</button>
+        <div class="filtro-container">
+            <label><i class="fas fa-filter"></i> FILTRAR POR:</label>
+            <select id="selectFiltro" class="selector-filtro">
+                <option value="todos">📊 TODOS LOS INGRESOS</option>
+                <option value="operativos">🏢 SOLO INGRESOS OPERATIVOS</option>
+                <option value="no_operativos">💰 SOLO INGRESOS NO OPERATIVOS</option>
+                <option value="otros">🎁 SOLO OTROS INGRESOS NO OPERATIVOS</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-superior">
+        <div class="kpi-superior-card"><div class="kpi-superior-label">TOTAL INGRESOS</div><div class="kpi-superior-valor" id="kpiTotalIngresos">$159.874,52</div><div class="kpi-superior-sub">Ene - May 2026</div></div>
+        <div class="kpi-superior-card"><div class="kpi-superior-label">INGRESOS OPERATIVOS</div><div class="kpi-superior-valor" id="kpiOperativos">$92.002,74</div><div class="kpi-superior-sub">Arriendos</div></div>
+        <div class="kpi-superior-card"><div class="kpi-superior-label">INGRESOS NO OPERATIVOS</div><div class="kpi-superior-valor" id="kpiNoOperativos">$49.404,99</div><div class="kpi-superior-sub">Pólizas + Bancos</div></div>
+        <div class="kpi-superior-card kpi-ejecucion"><div class="kpi-superior-label">EJECUCIÓN PRESUP.</div><div class="kpi-superior-valor" id="kpiEjecucion">51,87%</div><div class="kpi-superior-sub">$192.182,24 / $370.480,28</div></div>
+    </div>
+
+    <div class="main-layout">
+        <!-- ESTADO DE RESULTADOS -->
+        <div class="summary-card">
+            <div class="summary-header"><i class="fas fa-chart-line"></i><h3>ESTADO DE RESULTADOS</h3></div>
+            <div class="summary-body">
+                <div class="ingreso-item"><span class="ingreso-label">INGRESOS OPERATIVOS</span><span class="ingreso-valor" id="resOperativos">$92.002,74</span></div>
+                <div class="ingreso-item"><span class="ingreso-label">INGRESOS NO OPERATIVOS</span><span class="ingreso-valor" id="resNoOperativos">$49.404,99</span></div>
+                <div class="ingreso-item"><span class="ingreso-label">OTROS INGRESOS NO OPERATIVOS</span><span class="ingreso-valor" id="resOtros">$18.466,79</span></div>
+                <div class="ingreso-item total-item"><span class="ingreso-label"><strong>TOTAL INGRESOS</strong></span><span class="ingreso-valor" id="resTotalIngresos">$159.874,52</span></div>
+            </div>
+        </div>
+        <div class="summary-card">
+        <div class="summary-header"><i class="fas fa-chart-line"></i><h3>EGRESOS · EJECUCIÓN PRESUPUESTARIA ENE-MAY 2026</h3></div>
+        <div class="gastos-tabla-wrapper">
+            <table class="gastos-tabla">
+                <thead>
+                    <tr>
+                        <th>ITEM</th>
+                        <th>PRESUPUESTO ASIGNADO</th>
+                        <th>PRESUPUESTO EJECUTADO</th>
+                        <th>%</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>10% ESPACIOS FISICOS</td><td>$22.763,05</td><td>$8.371,01</td><td><span class="porcentaje-badge">37%</span></td></tr>
+                    <tr><td>15% APOYO ACTIVIDADES AYUDA</td><td>$34.395,78</td><td>$6.769,68</td><td><span class="porcentaje-badge">20%</span></td></tr>
+                    <tr><td>5% GASTOS ADMINISTRATIVOS</td><td>$11.260,40</td><td>$3.340,26</td><td><span class="porcentaje-badge">30%</span></td></tr>
+                    <tr><td>70% AYUDAS SOLIDARIAS</td><td>$159.342,07</td><td>$105.278,21</td><td><span class="porcentaje-badge">66%</span></td></tr>
+                    <tr><td>OTROS INGRESOS</td><td>$142.718,98</td><td>$68.422,88</td><td><span class="porcentaje-badge">48%</span></td></tr>
+                </tbody>
+                <tfoot>
+                    <tr class="total-row"><td><strong>TOTAL</strong></td><td><strong>$370.480,28</strong></td><td><strong>$192.182,24</strong></td><td><strong>51,87%</strong></td></tr>
+                </tfoot>
+            </table>
+        </div>
+        <div class="summary-body" style="padding-top: 0;">
+            <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 51.87%;"></div></div>
+            <div class="ingreso-item" style="border-bottom: none; padding-top: 12px;"><span class="ingreso-label">Saldo por ejecutar</span><span class="ingreso-valor">$178.298,04</span></div>
+        </div>
+    </div>
+        <!-- ESTADO DE SITUACIÓN FINANCIERA -->
+        <div class="summary-card">
+            <div class="summary-header"><i class="fas fa-balance-scale"></i><h3>ESTADO DE SITUACIÓN FINANCIERA</h3></div>
+            <div class="estado-grid">
+                <div class="seccion-estado">
+                    <h4>ACTIVOS</h4>
+                    <div class="item-estado"><span>CORRIENTES</span><span>$1.711.659,73</span></div>
+                    <div class="item-estado"><span>NO CORRIENTES</span><span>$99.168,88</span></div>
+                    <div class="item-estado total"><span>TOTAL ACTIVOS</span><span class="patrimonio-destacado">$1.810.828,61</span></div>
+                </div>
+                <div class="seccion-estado">
+                    <h4>PASIVOS</h4>
+                    <div class="item-estado"><span>CORRIENTES</span><span>$51.822,12</span></div>
+                    <div class="item-estado"><span>OTROS CORRIENTES</span><span>$31.727,57</span></div>
+                    <div class="item-estado total"><span>TOTAL PASIVOS</span><span>$83.549,69</span></div>
+                </div>
+                <div class="seccion-estado" style="grid-column: span 2;">
+                    <h4>PATRIMONIO</h4>
+                    <div class="item-estado"><span>ACUMULADO (CAPITAL)</span><span>$1.138.412,23</span></div>
+                    <div class="item-estado"><span>ACUMULADO (EXCEDENTES)</span><span>$613.560,52</span></div>
+                    <div class="item-estado"><span>RESULTADOS 2026</span><span class="resultado-negativo">-$24.693,83</span></div>
+                    <div class="item-estado total"><span>TOTAL PATRIMONIO</span><span class="patrimonio-destacado">$1.727.278,92</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EGRESOS - TABLA COMPLETA -->
+    
+
+    <!-- GRÁFICO DE COMPOSICIÓN -->
+    
+
+    <div class="footer">
+        <i class="fas fa-calculator"></i> INFORME DE GESTIÓN PRESUPUESTARIA · FUNDEBIP · Del 01 de enero al 31 de mayo de 2026
+    </div>
+</div>
+
+<script>
+    // Registrar plugin de datalabels
+    Chart.register(ChartDataLabels);
+    Chart.defaults.set('plugins.datalabels', { 
+        font: { weight: 'bold', size: 11 }, 
+        color: 'white',
+        formatter: (value, context) => {
+            const total = 159874.52;
+            const percentage = ((value / total) * 100).toFixed(1);
+            return `${percentage}%`;
+        }
+    });
+
+    // DATOS EXACTOS DEL ESTADO DE RESULTADOS
+    const ingresosOperativos = 92002.74;
+    const ingresosNoOperativos = 49404.99;
+    const otrosIngresosNoOperativos = 18466.79;
+    const totalIngresos = 159874.52;
+    
+    // DATOS DE EGRESOS
+    const totalAsignado = 370480.28;
+    const totalEjecutado = 192182.24;
+    
+    function formatMoney(value) { 
+        return value.toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); 
+    }
+    
+    let chartComposicion;
+    
+    
+    
+    function actualizarPorFiltro(filtro) {
+        let operativos = ingresosOperativos;
+        let noOperativos = ingresosNoOperativos;
+        let otros = otrosIngresosNoOperativos;
+        let total = totalIngresos;
+        
+        if (filtro === 'operativos') {
+            noOperativos = 0;
+            otros = 0;
+            total = ingresosOperativos;
+        } else if (filtro === 'no_operativos') {
+            operativos = 0;
+            otros = 0;
+            total = ingresosNoOperativos;
+        } else if (filtro === 'otros') {
+            operativos = 0;
+            noOperativos = 0;
+            total = otrosIngresosNoOperativos;
+        }
+        
+        // Actualizar KPIs
+        document.getElementById('kpiTotalIngresos').innerText = '$' + formatMoney(total);
+        document.getElementById('kpiOperativos').innerText = '$' + formatMoney(operativos);
+        document.getElementById('kpiNoOperativos').innerText = '$' + formatMoney(noOperativos);
+        document.getElementById('kpiEjecucion').innerHTML = ((totalEjecutado / totalAsignado) * 100).toFixed(2) + '%';
+        
+        // Actualizar Estado de Resultados
+        document.getElementById('resOperativos').innerHTML = '$' + formatMoney(operativos);
+        document.getElementById('resNoOperativos').innerHTML = '$' + formatMoney(noOperativos);
+        document.getElementById('resOtros').innerHTML = '$' + formatMoney(otros);
+        document.getElementById('resTotalIngresos').innerHTML = '$' + formatMoney(total);
+        
+        // Actualizar gráfico
+        if (chartComposicion) {
+            const nuevosDatos = [operativos, noOperativos, otros];
+            const nuevoTotal = operativos + noOperativos + otros;
+            chartComposicion.data.datasets[0].data = nuevosDatos;
+            
+            // Actualizar el formatter del datalabels para que use el nuevo total
+            chartComposicion.options.plugins.datalabels.formatter = (value) => {
+                if (nuevoTotal === 0) return '0%';
+                return ((value / nuevoTotal) * 100).toFixed(1) + '%';
+            };
+            chartComposicion.update();
+        }
+    }
+    
+    // Inicializar cuando el DOM esté listo
+    document.addEventListener('DOMContentLoaded', () => {
+        //initChart();
+        actualizarPorFiltro('todos');
+        
+        // Evento del filtro
+        const selectFiltro = document.getElementById('selectFiltro');
+        if (selectFiltro) {
+            selectFiltro.addEventListener('change', (e) => actualizarPorFiltro(e.target.value));
+        }
+        
+        // Evento del botón regresar
+        const btnRegresar = document.getElementById('btnRegresar');
+        if (btnRegresar) {
+            btnRegresar.addEventListener('click', () => {
+                if (document.referrer) {
+                    window.location.href = document.referrer;
+                } else {
+                    window.history.back();
+                }
+            });
+        }
+    });
+</script>
+</body>
+</html>

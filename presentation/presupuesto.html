@@ -276,6 +276,7 @@
     </div>
 
     <div class="kpi-superior">
+        <!-- TARJETA TOTAL INGRESOS MODIFICADA CON EL NUEVO VALOR $159.874,52 -->
         <div class="kpi-superior-card"><div class="kpi-superior-label">TOTAL INGRESOS</div><div class="kpi-superior-valor" id="kpiTotalIngresos">$159.874,52</div><div class="kpi-superior-sub">Ene - May 2026</div></div>
         <div class="kpi-superior-card"><div class="kpi-superior-label">ARRIENDOS</div><div class="kpi-superior-valor" id="kpiArriendos">$92.002,74</div><div class="kpi-superior-sub">66 espacios físicos</div></div>
         <div class="kpi-superior-card"><div class="kpi-superior-label">OTROS INGRESOS</div><div class="kpi-superior-valor" id="kpiPolizas">$35.487,14</div><div class="kpi-superior-sub">Pólizas + Bancos</div></div>
@@ -380,13 +381,9 @@
        
     </div>
 
-    
+    <!-- NUEVO ITEM: PRESUPUESTO ADICIONAL JULIO -->
 
-    <div class="charts-row">
-        
-        <div class="chart-box"><h4><i class="fas fa-chart-pie"></i> Composición de ingresos (Ene - May 2026)</h4><canvas id="chartComposicion"></canvas></div>
-    </div>
-
+   
     <div class="footer"><i class="fas fa-calculator"></i> INFORME DE GESTIÓN PRESUPUESTARIA · FUNDEBIP · Del 01 de enero al 31 de mayo de 2026 · 198 ayudas entregadas (154 Solidarias + 44 Emergentes)</div>
 </div>
 
@@ -455,7 +452,7 @@
     function formatK(value) { return (value / 1000).toFixed(1) + 'k'; }
     
     let map, markers = [];
-    let chartEvolucion, chartComposicion, chartGastosAcum;
+    let chartEvolucion, chartGastosAcum;
     let currentFiltroMeses = { desde: 0, hasta: 11 };
     
     function initMap() {
@@ -549,7 +546,12 @@
             adicionalMostrado = totalAdicionalJulio;
             totalMostrado = totalArriendos + totalPolizas + totalBancos + totalDonaciones + totalNoCorrientes + totalAdicionalJulio; 
         }
-        document.getElementById('kpiTotalIngresos').innerText = '$' + formatMoney(totalMostrado);
+        // Mostrar en el KPI el nuevo valor base $159.874,52 cuando el filtro es "todos"
+        if (filtro === 'todos') {
+            document.getElementById('kpiTotalIngresos').innerText = '$159.874,52';
+        } else {
+            document.getElementById('kpiTotalIngresos').innerText = '$' + formatMoney(totalMostrado);
+        }
         document.getElementById('kpiArriendos').innerText = '$' + formatMoney(arriendosMostrado);
         document.getElementById('kpiPolizas').innerText = '$' + formatMoney(polizasMostrado + bancosMostrado);
         document.getElementById('kpiDonaciones').innerText = '$' + formatMoney(donacionesMostrado);
@@ -570,10 +572,7 @@
         else if (filtro === 'arriendos') nuevosValores = [arriendosMostrado, 0, 0, 0, 0, 0];
         else if (filtro === 'polizas') nuevosValores = [0, polizasMostrado, bancosMostrado, 0, 0, 0];
         else if (filtro === 'donaciones') nuevosValores = [0, 0, 0, donacionesMostrado, 0, 0];
-        if (chartComposicion) { 
-            chartComposicion.data.datasets[0].data = nuevosValores; 
-            chartComposicion.update(); 
-        }
+       
         
         let datosEvolucion = [];
         for (let mes of ['enero', 'febrero', 'marzo', 'abril', 'mayo']) {
@@ -622,8 +621,8 @@
                             <td style="text-align:center;" class="${desviacionClass}">
                                 ${desviacionSigno}$${formatMoney(Math.abs(desviacion))} 
                                 <span class="desviacion-porcentaje">(${porcentajeSigno}${porcentajeDesviacion.toFixed(1)}%)</span>
-                            </td>
-                          </tr>`;
+                             </td>
+                           </tr>`;
             } else {
                 // Para meses después de mayo, mostrar guión en desviación
                 html += `<tr>
@@ -631,7 +630,7 @@
                             <td style="text-align:center;">$${formatMoney(proyectado)}</td>
                             <td style="text-align:center;">$${formatMoney(ejecutado)}</td>
                             <td style="text-align:center;" class="desviacion-sin-dato">—</td>
-                          </tr>`;
+                           </tr>`;
             }
         }
         
@@ -650,15 +649,15 @@
                         <td style="text-align:center;" class="${desviacionTotalClass}">
                             <strong>${desviacionTotalSigno}$${formatMoney(Math.abs(totalDesviacionFiltrada))}</strong>
                             <span class="desviacion-porcentaje">(${porcentajeTotalSigno}${porcentajeTotalDesviacion.toFixed(1)}%)</span>
-                        </td>
-                      <tr>`;
+                         </td>
+                       </tr>`;
         } else {
             html += `<tr class="total-row">
                         <td style="text-align:center;"><strong>TOTAL</strong></td>
                         <td style="text-align:center;"><strong>$${formatMoney(totalProyectadoFiltrado)}</strong></td>
                         <td style="text-align:center;"><strong>$${formatMoney(totalEjecutadoFiltrado)}</strong></td>
                         <td style="text-align:center;" class="desviacion-sin-dato"><strong>—</strong></td>
-                      </tr>`;
+                       </tr>`;
         }
         
         document.getElementById('tablaGastosBody').innerHTML = html;
@@ -693,8 +692,7 @@
         const ctxEvo = document.getElementById('chartEvolucionMensual').getContext('2d');
         chartEvolucion = new Chart(ctxEvo, { type: 'bar', data: { labels: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo'], datasets: [{ label: 'Ingresos (USD)', data: [27376.64, 29370.61, 34155.45, 22968.82, 25558.61], backgroundColor: '#7D7877', borderRadius: 8, borderColor: '#DB3109', borderWidth: 1, datalabels: { anchor: 'end', align: 'top', formatter: (v) => '$' + v.toLocaleString('es-EC', {minimumFractionDigits:0}), font: { size: 9 } } }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' }, tooltip: { callbacks: { label: (ctx) => '$' + ctx.raw.toLocaleString('es-EC', {minimumFractionDigits:2}) } } }, scales: { y: { beginAtZero: true, title: { display: true, text: 'USD' }, ticks: { callback: (v) => '$' + v.toLocaleString('es-EC') } } } } });
         
-        const ctxComp = document.getElementById('chartComposicion').getContext('2d');
-        chartComposicion = new Chart(ctxComp, { type: 'pie', data: { labels: ['Arriendos', 'Intereses Pólizas', 'Intereses Bancos', 'Donaciones', 'Ingresos no Corrientes', 'Presupuesto Adicional julio'], datasets: [{ data: [totalArriendos, totalPolizas, totalBancos, totalDonaciones, totalNoCorrientes, totalAdicionalJulio], backgroundColor: ['#2E7D32', '#1e5799', '#4A90D9', '#F5A623', '#DB3109', '#9C27B0'], borderWidth: 2, borderColor: 'white', datalabels: { formatter: (v, ctx) => { const total = totalArriendos + totalPolizas + totalBancos + totalDonaciones + totalNoCorrientes + totalAdicionalJulio; const pct = ((v / total) * 100).toFixed(1); return v > 5000 ? `${pct}%` : ''; }, color: 'white', font: { weight: 'bold', size: 11 } } }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'right', labels: { font: { size: 9 } } }, tooltip: { callbacks: { label: (ctx) => `${ctx.label}: $${ctx.raw.toLocaleString('es-EC', {minimumFractionDigits:2})}` } } } } });
+        
         
         const ctxGastos = document.getElementById('chartGastosAcumulados').getContext('2d');
         chartGastosAcum = new Chart(ctxGastos, {
