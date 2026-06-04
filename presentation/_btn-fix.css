@@ -1,0 +1,82 @@
+.btn-fundebip.btn-back {
+    background-color: #1E70BF !important;
+    background-image: none !important;
+    border: 1px solid #1E70BF !important;
+    color: #ffffff !important;
+}
+
+/* Asegura que el botón Regresar quede por encima de todo en la top-bar */
+.top-bar .btn-back {
+    position: relative;
+    z-index: 9999 !important;
+}
+
+.top-bar .btn-back i { margin-right: 6px; }
+
+/* Etiqueta del filtro en la barra superior: texto blanco */
+.top-bar .filtro-container label {
+    color: #ffffff !important;
+    font-weight: 800;
+}
+
+/* Título centrado en la top-bar */
+.top-bar .top-title {
+    flex: 1 1 auto;
+    text-align: center;
+    color: #ffffff !important;
+    font-weight: 900;
+    font-size: 1rem;
+    letter-spacing: 1px;
+}
+
+/* Asegura que la top-bar pueda posicionar el título centrado */
+.top-bar {
+    position: relative;
+}
+
+/* Centro absoluto para que siempre quede centrado independientemente
+   de otros elementos (botón o filtro). */
+.top-bar .top-title {
+    position: absolute;
+    left: 50%;
+    top: 35%;
+    transform: translate(-50%, -50%);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #ffffff !important;
+    font-weight: 900;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    transition: transform .12s ease, opacity .12s ease;
+    z-index: 99999;
+    pointer-events: auto;
+}
+
+.top-bar .top-title img {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    border-radius: 4px;
+}
+
+/* Asegura que el contenedor del filtro no tape el título */
+.top-bar .filtro-container {
+    position: relative;
+    z-index: 1;
+}
+
+/* Efecto hover sutil */
+.top-bar .top-title:hover {
+    transform: translate(-50%, -50%) scale(1.04);
+    opacity: 0.98;
+    cursor: pointer;
+}
+
+/* Logo dentro del título: transición y pequeño efecto */
+.top-bar .top-title img {
+    transition: transform .12s ease, opacity .12s ease;
+    will-change: transform;
+}
+.top-bar .top-title:hover img { transform: scale(1.12); }
+.top-bar .top-title span { color: #ffffff !important; font-weight: 900; margin-left: 6px; }

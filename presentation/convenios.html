@@ -26,16 +26,42 @@
             --fundebip-gray-dark: #5D5A59;
             --vacunas-color: #1e5799;
             --educacion-color: #2c6e2c;
+            --nuevo-educacion-color: #9b6a2c;
             --shadow-lg: 0 20px 40px -12px rgba(0, 0, 0, 0.15);
             --shadow-sm: 0 6px 14px rgba(0, 0, 0, 0.08);
         }
         .dashboard { max-width: 1800px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
         
-        /* Filtro */
-        .filtro-container {
+        /* Botón regresar: fijo arriba del todo */
+        .fixed-back-btn {
+            position: sticky;
+            top: 0;
+            z-index: 30;
+            margin-bottom: 6px;
+        }
+        .btn-regresar-solo {
+            background: linear-gradient(135deg, var(--fundebip-red), var(--fundebip-red-dark));
+            color: white;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 60px;
+            font-weight: 800;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .btn-regresar-solo:hover { transform: translateY(-2px); background: linear-gradient(135deg, #c02c07, #9e2305); }
+        
+        /* Filtro independiente */
+        .filtro-wrapper {
             background: white;
             border-radius: 28px;
-            padding: 16px 20px;
+            padding: 12px 20px;
             box-shadow: var(--shadow-sm);
             display: flex;
             align-items: center;
@@ -43,7 +69,7 @@
             flex-wrap: wrap;
             border: 1px solid rgba(125,120,119,0.15);
         }
-        .filtro-container label { font-weight: 800; font-size: 0.85rem; color: var(--fundebip-gray-dark); }
+        .filtro-wrapper label { font-weight: 800; font-size: 0.85rem; color: var(--fundebip-gray-dark); }
         .selector-filtro {
             padding: 10px 20px;
             border-radius: 40px;
@@ -52,18 +78,20 @@
             font-weight: 600;
             font-size: 0.9rem;
             cursor: pointer;
-            min-width: 220px;
+            min-width: 280px;
         }
         .leyenda-mapa {
             display: flex;
             gap: 20px;
             margin-left: auto;
             font-size: 0.75rem;
+            flex-wrap: wrap;
         }
         .leyenda-item { display: flex; align-items: center; gap: 8px; }
         .color-marker { width: 20px; height: 20px; border-radius: 50%; }
         .color-marker.vacunas { background: #1e5799; border: 2px solid #DB3109; }
         .color-marker.educacion { background: #2c6e2c; border: 2px solid #DB3109; }
+        .color-marker.calasanz { background: #9b6a2c; border: 2px solid #DB3109; }
         
         /* KPI superiores */
         .kpi-superior {
@@ -81,14 +109,21 @@
         .kpi-superior-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #2C3E50; margin-bottom: 6px; }
         .kpi-superior-valor { font-size: 24px; font-weight: 800; color: #000; margin: 4px 0; }
         .kpi-superior-sub { font-size: 10px; font-weight: 600; color: var(--fundebip-gray-dark); background: rgba(125,120,119,0.1); display: inline-block; padding: 3px 10px; border-radius: 30px; }
-        .kpi-zero { opacity: 0.5; filter: grayscale(0.3); }
         
-        /* Layout principal: 3 columnas */
-        .main-layout {
+        /* Layout principal: 3 columnas - los convenios arriba */
+        .convenios-row {
             display: grid;
-            grid-template-columns: 1fr 1fr 1.1fr;
+            grid-template-columns: repeat(3, 1fr);
             gap: 20px;
-            align-items: start;
+            margin-bottom: 20px;
+        }
+        
+        /* Segunda fila: Mapa + Contenedor unificado (gráfico/tabla) */
+        .dashboard-row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            align-items: stretch;
         }
         
         /* Tarjetas de convenios */
@@ -113,6 +148,7 @@
         }
         .convenio-header.vacunas { background: linear-gradient(135deg, #1e5799, #2b7abf, var(--fundebip-red)); }
         .convenio-header.educacion { background: linear-gradient(135deg, #2c3e50, #4a6741, var(--fundebip-red)); }
+        .convenio-header.calasanz { background: linear-gradient(135deg, #7d5d2e, #b87c2e, var(--fundebip-red)); }
         .convenio-header i { font-size: 1.6rem; }
         .convenio-header h2 { font-size: 1rem; font-weight: 700; }
         .convenio-header p { font-size: 0.6rem; opacity: 0.9; margin-top: 2px; }
@@ -125,18 +161,31 @@
         .info-contacto { background: #f8f9fa; border-radius: 16px; padding: 10px; margin-top: 10px; font-size: 0.62rem; border-left: 3px solid var(--fundebip-red); }
         .info-contacto i { width: 18px; color: var(--fundebip-red); }
         
-        /* MAPA */
+        /* MAPA con borde profesional */
         .map-panel {
             background: white;
             border-radius: 28px;
             box-shadow: var(--shadow-lg);
             overflow: hidden;
-            border: 1px solid rgba(125,120,119,0.15);
+            border: 2px solid transparent;
+            background: linear-gradient(white, white) padding-box, 
+                        linear-gradient(135deg, var(--fundebip-red), var(--fundebip-gray)) border-box;
             height: 100%;
             display: flex;
             flex-direction: column;
         }
-        #map { height: 280px; width: 100%; background: #e9f0f5; }
+        .map-header {
+            background: linear-gradient(135deg, var(--fundebip-gray-dark), #3d3a39);
+            padding: 12px 18px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 3px solid var(--fundebip-red);
+        }
+        .map-header i { font-size: 1.2rem; }
+        .map-header h3 { font-size: 0.9rem; font-weight: 700; letter-spacing: 0.5px; }
+        #map { height: 320px; width: 100%; background: #e9f0f5; }
         .map-controls {
             padding: 10px 12px;
             background: linear-gradient(135deg, var(--fundebip-gray-dark), #4a4746);
@@ -166,19 +215,34 @@
             display: flex;
             gap: 15px;
             border-top: 1px solid rgba(0,0,0,0.05);
+            flex-wrap: wrap;
         }
         .map-leyenda-inline span { display: inline-flex; align-items: center; gap: 5px; }
         
-        /* Contenedor unificado: Tabs */
+        /* Contenedor unificado con borde profesional y header */
         .unified-chart-container {
             background: white;
             border-radius: 28px;
             box-shadow: var(--shadow-lg);
-            border: 1px solid rgba(125,120,119,0.15);
+            border: 2px solid transparent;
+            background: linear-gradient(white, white) padding-box, 
+                        linear-gradient(135deg, var(--fundebip-red), var(--fundebip-gray)) border-box;
             overflow: hidden;
             display: flex;
             flex-direction: column;
+            height: 100%;
         }
+        .chart-header {
+            background: linear-gradient(135deg, var(--fundebip-gray-dark), #3d3a39);
+            padding: 12px 18px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 3px solid var(--fundebip-red);
+        }
+        .chart-header i { font-size: 1.2rem; }
+        .chart-header h3 { font-size: 0.9rem; font-weight: 700; letter-spacing: 0.5px; }
         .chart-tabs {
             display: flex;
             background: #f8f9fa;
@@ -242,7 +306,6 @@
             margin-top: 20px;
         }
         
-        /* Estilo para el enlace en popup */
         .map-popup-link {
             color: #DB3109;
             font-weight: bold;
@@ -252,45 +315,50 @@
         }
         .map-popup-link:hover { text-decoration: underline; }
         
-        @media (max-width: 1200px) {
-            .main-layout { grid-template-columns: 1fr 1fr; }
-            .map-panel { grid-column: span 2; margin-top: 0; }
+        @media (max-width: 1100px) {
+            .dashboard-row-2 { grid-template-columns: 1fr; }
+            .convenios-row { grid-template-columns: repeat(2, 1fr); }
         }
-        @media (max-width: 800px) {
-            .main-layout { grid-template-columns: 1fr; }
-            .map-panel { grid-column: span 1; }
+        @media (max-width: 700px) {
+            .convenios-row { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
 <div class="dashboard">
+    <!-- BOTÓN REGRESAR -->
+    <div class="fixed-back-btn">
+        <button class="btn-regresar-solo" id="btnRegresarTop"><i class="fas fa-arrow-left"></i> Regresar</button>
+    </div>
     
-    <!-- FILTRO CON LEYENDA -->
-    <div class="filtro-container">
+    <!-- FILTRO -->
+    <div class="filtro-wrapper">
         <label><i class="fas fa-filter"></i> FILTRAR POR CONVENIO:</label>
         <select id="selectConvenio" class="selector-filtro">
-            <option value="ambos">📊 CONVENIOS</option>
+            <option value="ambos">📊 TODOS LOS CONVENIOS</option>
             <option value="vacunas">💉 VACUNAMED S.A. (Vacunas)</option>
             <option value="educacion">🎓 U.E. "La Presentación" (Educación)</option>
+            <option value="calasanz">🏫 U.E. "San José de Calasanz" (Nuevo)</option>
         </select>
         <div class="leyenda-mapa">
-            <div class="leyenda-item"><div class="color-marker vacunas"></div><span>VACUNAMED (3 puntos)</span></div>
+            <div class="leyenda-item"><div class="color-marker vacunas"></div><span>VACUNAMED (3 sedes)</span></div>
             <div class="leyenda-item"><div class="color-marker educacion"></div><span>U.E. La Presentación</span></div>
+            <div class="leyenda-item"><div class="color-marker calasanz"></div><span>U.E. San José de Calasanz</span></div>
         </div>
     </div>
 
     <!-- KPI resumen -->
     <div class="kpi-superior">
-        <div class="kpi-superior-card"><div class="kpi-superior-label">CONVENIOS ACTIVOS</div><div class="kpi-superior-valor" id="kpiValorConvenios">2</div><div class="kpi-superior-sub">En ejecución</div></div>
+        <div class="kpi-superior-card"><div class="kpi-superior-label">CONVENIOS 2026</div><div class="kpi-superior-valor" id="kpiValorConvenios">3</div><div class="kpi-superior-sub">En ejecución</div></div>
         <div class="kpi-superior-card"><div class="kpi-superior-label">DTO. PROMEDIO</div><div class="kpi-superior-valor" id="kpiValorDescuento">23%</div><div class="kpi-superior-sub">En servicios</div></div>
         <div class="kpi-superior-card"><div class="kpi-superior-label">BENEFICIO EDUCACIÓN</div><div class="kpi-superior-valor" id="kpiValorEducacion">30%</div><div class="kpi-superior-sub">Matrícula + Pensión</div></div>
         <div class="kpi-superior-card"><div class="kpi-superior-label">CONSULTAS GRATIS</div><div class="kpi-superior-valor" id="kpiValorGratis">2 x 20</div><div class="kpi-superior-sub">Pediatría</div></div>
         <div class="kpi-superior-card"><div class="kpi-superior-label">VIGENCIA</div><div class="kpi-superior-valor" id="kpiValorVigencia">2026-2031</div><div class="kpi-superior-sub">Hasta 5 años</div></div>
     </div>
 
-    <!-- Layout principal: 3 columnas -->
-    <div class="main-layout">
-        <!-- Columna 1: VACUNAMED -->
+    <!-- FILA 1: 3 convenios (arriba) -->
+    <div class="convenios-row">
+        <!-- VACUNAMED -->
         <div class="convenio-card" id="cardVacunas">
             <div class="convenio-header vacunas">
                 <i class="fas fa-syringe"></i>
@@ -319,7 +387,7 @@
             </div>
         </div>
 
-        <!-- Columna 2: U.E. "La Presentación" -->
+        <!-- U.E. "La Presentación" -->
         <div class="convenio-card" id="cardEducacion">
             <div class="convenio-header educacion">
                 <i class="fas fa-school"></i>
@@ -345,50 +413,84 @@
             </div>
         </div>
 
-        <!-- Columna 3: MAPA -->
+        <!-- U.E. "San José de Calasanz" -->
+        <div class="convenio-card" id="cardCalasanz">
+            <div class="convenio-header calasanz">
+                <i class="fas fa-chalkboard-user"></i>
+                <div>
+                    <h2>U.E. "San José de Calasanz"</h2>
+                    <p>Descuento en pensiones para hijos de servidores policiales</p>
+                </div>
+            </div>
+            <div class="convenio-body">
+                <h4><i class="fas fa-handshake"></i> Beneficio exclusivo</h4>
+                <ul class="beneficio-lista">
+                    <li><i class="fas fa-percent"></i> <strong>Descuento en pensiones</strong> para hijos de servidores policiales en <strong>servicio activo y pasivo</strong>.</li>
+                    <li><i class="fas fa-baby-carriage"></i> <strong>Oferta educativa:</strong> Inicial (4 años), Educación General Básica y Bachillerato - Jornada matutina.</li>
+                    <li><i class="fas fa-id-card"></i> <strong>Requisitos:</strong> Credencial actualizada + documento que certifique vínculo familiar con el estudiante.</li>
+                    <li><i class="fas fa-building"></i> Ubicación estratégica: <strong>Guayaquil – Urdesa Norte</strong></li>
+                </ul>
+                <div class="info-contacto">
+                    <i class="fas fa-map-marker-alt"></i> Guayaquil - Urdesa Norte<br>
+                    <i class="fas fa-globe"></i> www.fundebip.com · secretaria@fundebip.com<br>
+                    <i class="fab fa-whatsapp"></i> Más información: 0978840209<br>
+                    <i class="fas fa-calendar-alt"></i> Vigencia: Convenio activo - Beneficio directo para miembros FUNDEBIP
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FILA 2: MAPA (izquierda) + CONTENEDOR UNIFICADO (derecha) -->
+    <div class="dashboard-row-2">
+        <!-- MAPA con encabezado profesional -->
         <div class="map-panel">
+            <div class="map-header">
+                <i class="fas fa-map-marked-alt"></i>
+                <h3>📍 MAPA DE COBERTURA - PUNTOS DE ATENCIÓN</h3>
+            </div>
             <div id="map"></div>
             <div class="map-controls">
-                <button class="btn-fundebip" id="btnVerTodos"><i class="fas fa-map-pin"></i> Ver todos los puntos</button>
-                <button class="btn-fundebip btn-secondary" id="btnInicioMapa"><i class="fas fa-home"></i> Inicio</button>
+                <button class="btn-fundebip" id="btnVerTodos"><i class="fas fa-map-pin"></i> Ver todos los puntos (Ecuador)</button>
+                <button class="btn-fundebip btn-secondary" id="btnInicioMapa"><i class="fas fa-home"></i> Inicio Quito</button>
             </div>
             <div class="map-leyenda-inline">
                 <span><i class="fas fa-map-marker-alt" style="color:#1e5799;"></i> VACUNAMED (3 sedes)</span>
                 <span><i class="fas fa-map-marker-alt" style="color:#2c6e2c;"></i> U.E. La Presentación</span>
-                <span><i class="fas fa-info-circle" style="color:#DB3109;"></i> Click en marcador → "Cómo llegar"</span>
-            </div>
-            <div style="padding: 0 16px 16px; margin-top: 18px;">
-                <button class="btn-fundebip" id="btnRegresar" style="width:100%; justify-content:center; background-color:#1E70BF !important; background-image:none !important; border: 1px solid #1E70BF !important; color:#ffffff !important; margin-top: 16px; border-radius: 40px;">
-                    <i class="fas fa-arrow-left"></i> Regresar
-                </button>
+                <span><i class="fas fa-map-marker-alt" style="color:#9b6a2c;"></i> U.E. San José de Calasanz (Urdesa)</span>
+                <span><i class="fas fa-info-circle" style="color:#DB3109;"></i> Click → Cómo llegar</span>
             </div>
         </div>
-    </div>
 
-    <!-- Contenedor unificado: TABS - PRIMERO GRÁFICO, LUEGO TABLA -->
-    <div class="unified-chart-container">
-        <div class="chart-tabs">
-            <button class="tab-btn active" data-tab="grafico"><i class="fas fa-chart-bar"></i> Descuentos por Servicio</button>
-            <button class="tab-btn" data-tab="tabla"><i class="fas fa-table"></i> Tabla de Vacunas</button>
-        </div>
-        <div class="chart-panel">
-            <div id="graficoContainer" style="width:100%; display: block;">
-                <canvas id="chartDescuentos"></canvas>
+        <!-- Contenedor unificado (Gráfico + Tabla) con encabezado profesional -->
+        <div class="unified-chart-container">
+            <div class="chart-header">
+                <i class="fas fa-chart-line"></i>
+                <h3>📊 BENEFICIOS VACUNAMED - DESCUENTOS EXCLUSIVOS</h3>
             </div>
-            <div id="tablaContainer" style="width:100%; display: none;">
-                <table class="tabla-vacunas" id="tablaVacunas">
-                    <thead><tr><th>Servicio</th><th>Precio regular</th><th>Precio convenio</th><th>Dto.</th></tr></thead>
-                    <tbody id="tablaVacunasBody"></tbody>
-                </table>
+            <div class="chart-tabs">
+                <button class="tab-btn active" data-tab="grafico"><i class="fas fa-chart-bar"></i> Gráfico de Descuentos</button>
+                <button class="tab-btn" data-tab="tabla"><i class="fas fa-table"></i> Tabla de Vacunas</button>
             </div>
-        </div>
-        <div class="footer-chart" id="footerChart">
-            <i class="fas fa-chart-simple"></i> Datos del Convenio VACUNAMED · Descuentos exclusivos para servidores policiales
+            <div class="chart-panel">
+                <div id="graficoContainer" style="width:100%; display: block;">
+                    <canvas id="chartDescuentos"></canvas>
+                </div>
+                <div id="tablaContainer" style="width:100%; display: none;">
+                    <table class="tabla-vacunas" id="tablaVacunas">
+                        <thead><tr><th>Servicio</th><th>Precio regular</th><th>Precio convenio</th><th>Dto.</th></tr>
+                        </thead>
+                        <tbody id="tablaVacunasBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="footer-chart">
+                <i class="fas fa-chart-simple"></i> Datos del Convenio VACUNAMED · Descuentos exclusivos para servidores policiales
+            </div>
         </div>
     </div>
 
     <div class="footer-main">
-        <i class="fas fa-handshake"></i> Convenios activos FUNDEBIP · Vacunación preventiva + Educación de calidad · Beneficios exclusivos para servidores policiales y sus familias
+        <i class="fas fa-handshake"></i> Convenios activos FUNDEBIP · Vacunación preventiva + Educación de calidad (La Presentación + San José de Calasanz) · Beneficios exclusivos para servidores policiales y sus familias
     </div>
 </div>
 
@@ -402,7 +504,6 @@
         color: '#1a1a1a'
     });
 
-    // Datos de vacunas
     const vacunasData = [
         { nombre: "VPH", regular: "130.32", convenio: "105.00", dto: "19.4%" },
         { nombre: "Neumonía", regular: "72.00", convenio: "60.00", dto: "16.7%" },
@@ -412,7 +513,6 @@
         { nombre: "Megadosis Vitamina C", regular: "25.00", convenio: "20.00", dto: "20%" },
         { nombre: "Consulta pediátrica", regular: "25.00", convenio: "15.00", dto: "40%" }
     ];
-
     const serviciosDescuentos = ['VPH', 'Neumonía', 'Hepatitis A', 'Influenza', 'Megadosis C', 'Consulta Pediátrica'];
     const valoresDescuentos = [19.43, 16.66, 20, 20, 20, 40];
 
@@ -423,102 +523,71 @@
         { nombre: "Sucursal Calderón", direccion: "Lizardo Becerra N1-99 entre 9 de Agosto y Carapungo", horario: "Lun-Vie 08:30-17:00, Sáb 08:30-13:30", telefono: "2256-918", coords: [-0.088, -78.437] }
     ];
     const puntoEducacion = { nombre: "U.E. 'La Presentación'", direccion: "Miraflores, José de Armero Oe7-10 y Santa Rosa", telefono: "022223456", coords: [-0.206, -78.514] };
+    const puntoCalasanz = { nombre: "U.E. San José de Calasanz", direccion: "Guayaquil - Urdesa Norte", telefono: "0978840209", coords: [-2.189, -79.886] };
 
-    let map, markersVacunas = [], markerEducacion = null;
+    let map, markersVacunas = [], markerEducacion = null, markerCalasanz = null;
     let chartDescuentos;
 
+    // Vista Ecuador completa (bounds del país)
+    const ecuadorBounds = [[-5.0, -81.5], [1.5, -75.0]];
+
     function initMap() {
-        map = L.map('map').setView([-0.1835, -78.4985], 13);
+        map = L.map('map').setView([-1.5, -78.5], 6); // Vista inicial: Ecuador completo
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; OpenStreetMap',
             maxZoom: 18
         }).addTo(map);
         cargarMarcadores('ambos');
+        // Por defecto mostrar todo Ecuador
+        map.fitBounds(ecuadorBounds);
+    }
+
+    function verTodosPuntos() {
+        // Mostrar todo Ecuador con todos los puntos
+        map.fitBounds(ecuadorBounds);
     }
 
     function cargarMarcadores(filtro) {
         markersVacunas.forEach(m => map.removeLayer(m));
         if (markerEducacion) map.removeLayer(markerEducacion);
+        if (markerCalasanz) map.removeLayer(markerCalasanz);
         markersVacunas = [];
         
-        const iconVacunas = L.divIcon({
-            html: '<i class="fas fa-map-marker-alt" style="font-size: 26px; color: #1e5799; text-shadow: 0 0 2px white;"></i>',
-            iconSize: [26, 26],
-            className: 'custom-marker-icon',
-            popupAnchor: [0, -13]
-        });
-        
-        const iconEducacion = L.divIcon({
-            html: '<i class="fas fa-map-marker-alt" style="font-size: 26px; color: #2c6e2c; text-shadow: 0 0 2px white;"></i>',
-            iconSize: [26, 26],
-            className: 'custom-marker-icon',
-            popupAnchor: [0, -13]
-        });
+        const iconVacunas = L.divIcon({ html: '<i class="fas fa-map-marker-alt" style="font-size: 26px; color: #1e5799; text-shadow: 0 0 2px white;"></i>', iconSize: [26, 26], className: 'custom-marker-icon', popupAnchor: [0, -13] });
+        const iconEducacion = L.divIcon({ html: '<i class="fas fa-map-marker-alt" style="font-size: 26px; color: #2c6e2c; text-shadow: 0 0 2px white;"></i>', iconSize: [26, 26], className: 'custom-marker-icon', popupAnchor: [0, -13] });
+        const iconCalasanz = L.divIcon({ html: '<i class="fas fa-map-marker-alt" style="font-size: 26px; color: #9b6a2c; text-shadow: 0 0 2px white;"></i>', iconSize: [26, 26], className: 'custom-marker-icon', popupAnchor: [0, -13] });
         
         if (filtro === 'vacunas' || filtro === 'ambos') {
             puntosVacunas.forEach(punto => {
                 const marker = L.marker(punto.coords, { icon: iconVacunas }).addTo(map);
-                const popupContent = `
-                    <div style="min-width:220px;">
-                        <b>💉 ${punto.nombre}</b><br>
-                        📍 ${punto.direccion}<br>
-                        🕒 ${punto.horario}<br>
-                        📞 ${punto.telefono}<br>
-                        <a href="https://www.google.com/maps/dir/?api=1&destination=${punto.coords[0]},${punto.coords[1]}" target="_blank" class="map-popup-link" style="color:#DB3109; font-weight:bold; text-decoration:none; display:inline-block; margin-top:5px;">🧭 Cómo llegar →</a>
-                    </div>
-                `;
-                marker.bindPopup(popupContent);
-                // Solo clic para abrir, nada de hover
+                marker.bindPopup(`<div style="min-width:220px;"><b>💉 ${punto.nombre}</b><br>📍 ${punto.direccion}<br>🕒 ${punto.horario}<br>📞 ${punto.telefono}<br><a href="https://www.google.com/maps/dir/?api=1&destination=${punto.coords[0]},${punto.coords[1]}" target="_blank" class="map-popup-link">🧭 Cómo llegar →</a></div>`);
                 markersVacunas.push(marker);
             });
         }
-        
         if (filtro === 'educacion' || filtro === 'ambos') {
             markerEducacion = L.marker(puntoEducacion.coords, { icon: iconEducacion }).addTo(map);
-            const popupContent = `
-                <div style="min-width:220px;">
-                    <b>🎓 ${puntoEducacion.nombre}</b><br>
-                    📍 ${puntoEducacion.direccion}<br>
-                    🎓 30% descuento en matrícula y pensión<br>
-                    📞 ${puntoEducacion.telefono}<br>
-                    <a href="https://www.google.com/maps/dir/?api=1&destination=${puntoEducacion.coords[0]},${puntoEducacion.coords[1]}" target="_blank" class="map-popup-link" style="color:#2c6e2c; font-weight:bold; text-decoration:none; display:inline-block; margin-top:5px;">🧭 Cómo llegar →</a>
-                </div>
-            `;
-            markerEducacion.bindPopup(popupContent);
+            markerEducacion.bindPopup(`<div style="min-width:220px;"><b>🎓 ${puntoEducacion.nombre}</b><br>📍 ${puntoEducacion.direccion}<br>🎓 30% descuento en matrícula y pensión<br>📞 ${puntoEducacion.telefono}<br><a href="https://www.google.com/maps/dir/?api=1&destination=${puntoEducacion.coords[0]},${puntoEducacion.coords[1]}" target="_blank" class="map-popup-link">🧭 Cómo llegar →</a></div>`);
         }
-    }
-
-    function verTodosPuntos() {
-        const bounds = [];
-        if (markersVacunas.length > 0) markersVacunas.forEach(m => bounds.push(m.getLatLng()));
-        if (markerEducacion) bounds.push(markerEducacion.getLatLng());
-        if (bounds.length > 0) map.fitBounds(bounds);
-        else map.setView([-0.1835, -78.4985], 13);
+        if (filtro === 'calasanz' || filtro === 'ambos') {
+            markerCalasanz = L.marker(puntoCalasanz.coords, { icon: iconCalasanz }).addTo(map);
+            markerCalasanz.bindPopup(`<div style="min-width:240px;"><b>🏫 ${puntoCalasanz.nombre}</b><br>📍 ${puntoCalasanz.direccion}<br>🎓 Descuento en pensiones para hijos de policías (activos/pasivos)<br>📞 ${puntoCalasanz.telefono}<br>📘 Oferta: Inicial 4 años, Básica y Bachillerato<br><a href="https://www.google.com/maps/dir/?api=1&destination=${puntoCalasanz.coords[0]},${puntoCalasanz.coords[1]}" target="_blank" class="map-popup-link">🧭 Cómo llegar →</a></div>`);
+        }
     }
 
     function inicioMapa() { map.setView([-0.1835, -78.4985], 13); }
 
     function renderTablaVacunas(mostrar) {
         const tbody = document.getElementById('tablaVacunasBody');
-        if (!mostrar) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999;">Filtro no aplica a este convenio</td></tr>';
-            return;
-        }
+        if (!mostrar) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Filtro no aplica a este convenio</td></tr>'; return; }
         let html = '';
-        vacunasData.forEach(v => {
-            html += `<tr>
-                        <td><strong>${v.nombre}</strong></td>
-                        <td>$${v.regular}</td>
-                        <td style="color:#2E7D32; font-weight:bold;">$${v.convenio}</td>
-                        <td><span class="badge-descuento">${v.dto}</span></td>
-                     </tr>`;
-        });
+        vacunasData.forEach(v => { html += `<tr><td><strong>${v.nombre}</strong></td><td>$${v.regular}</td><td style="color:#2E7D32;">$${v.convenio}</td><td><span class="badge-descuento">${v.dto}</span></td></tr>`; });
         tbody.innerHTML = html;
     }
 
     function actualizarTodo(filtro) {
         const cardVacunas = document.getElementById('cardVacunas');
         const cardEducacion = document.getElementById('cardEducacion');
+        const cardCalasanz = document.getElementById('cardCalasanz');
         const unifiedContainer = document.querySelector('.unified-chart-container');
         const kpiConvenios = document.getElementById('kpiValorConvenios');
         const kpiDescuento = document.getElementById('kpiValorDescuento');
@@ -529,43 +598,36 @@
         if (filtro === 'vacunas') {
             cardVacunas.classList.remove('filtrado-oculto');
             cardEducacion.classList.add('filtrado-oculto');
+            cardCalasanz.classList.add('filtrado-oculto');
             unifiedContainer.style.display = 'flex';
             renderTablaVacunas(true);
-            kpiConvenios.innerText = '1';
-            kpiDescuento.innerText = '22.7%';
-            kpiEducacion.innerText = '0%';
-            kpiGratis.innerText = '2 x 20';
-            kpiVigencia.innerText = '2026-2028';
-            if (chartDescuentos) {
-                chartDescuentos.data.datasets[0].data = valoresDescuentos;
-                chartDescuentos.update();
-            }
+            kpiConvenios.innerText = '1'; kpiDescuento.innerText = '22.7%'; kpiEducacion.innerText = '0%'; kpiGratis.innerText = '2 x 20'; kpiVigencia.innerText = '2026-2028';
+            if(chartDescuentos) { chartDescuentos.data.datasets[0].data = valoresDescuentos; chartDescuentos.update(); }
         } 
         else if (filtro === 'educacion') {
             cardVacunas.classList.add('filtrado-oculto');
             cardEducacion.classList.remove('filtrado-oculto');
+            cardCalasanz.classList.add('filtrado-oculto');
             unifiedContainer.style.display = 'none';
             renderTablaVacunas(false);
-            kpiConvenios.innerText = '1';
-            kpiDescuento.innerText = '30%';
-            kpiEducacion.innerText = '30%';
-            kpiGratis.innerText = '0';
-            kpiVigencia.innerText = '2026-2031';
+            kpiConvenios.innerText = '1'; kpiDescuento.innerText = '30%'; kpiEducacion.innerText = '30%'; kpiGratis.innerText = '0'; kpiVigencia.innerText = '2026-2031';
+        }
+        else if (filtro === 'calasanz') {
+            cardVacunas.classList.add('filtrado-oculto');
+            cardEducacion.classList.add('filtrado-oculto');
+            cardCalasanz.classList.remove('filtrado-oculto');
+            unifiedContainer.style.display = 'none';
+            renderTablaVacunas(false);
+            kpiConvenios.innerText = '1'; kpiDescuento.innerText = '20%'; kpiEducacion.innerText = '20% (pensión)'; kpiGratis.innerText = 'N/A'; kpiVigencia.innerText = 'Vigente';
         } 
         else {
             cardVacunas.classList.remove('filtrado-oculto');
             cardEducacion.classList.remove('filtrado-oculto');
+            cardCalasanz.classList.remove('filtrado-oculto');
             unifiedContainer.style.display = 'flex';
             renderTablaVacunas(true);
-            kpiConvenios.innerText = '2';
-            kpiDescuento.innerText = '23%';
-            kpiEducacion.innerText = '30%';
-            kpiGratis.innerText = '2 x 20';
-            kpiVigencia.innerText = '2026-2031';
-            if (chartDescuentos) {
-                chartDescuentos.data.datasets[0].data = valoresDescuentos;
-                chartDescuentos.update();
-            }
+            kpiConvenios.innerText = '3'; kpiDescuento.innerText = '24%'; kpiEducacion.innerText = '30% / 20%'; kpiGratis.innerText = '2 x 20'; kpiVigencia.innerText = '2026-2031';
+            if(chartDescuentos) { chartDescuentos.data.datasets[0].data = valoresDescuentos; chartDescuentos.update(); }
         }
         cargarMarcadores(filtro);
     }
@@ -573,39 +635,8 @@
     function initChart() {
         const ctx = document.getElementById('chartDescuentos').getContext('2d');
         chartDescuentos = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: serviciosDescuentos,
-                datasets: [{
-                    label: '% de descuento',
-                    data: valoresDescuentos,
-                    backgroundColor: '#7D7877',
-                    borderRadius: 10,
-                    borderWidth: 2,
-                    borderColor: '#DB3109',
-                    datalabels: {
-                        anchor: 'end',
-                        align: 'top',
-                        formatter: (v) => v + '%',
-                        font: { weight: 'bold', size: 10 },
-                        backgroundColor: 'rgba(255,255,255,0.8)',
-                        padding: { left: 4, right: 4, top: 2, bottom: 2 },
-                        borderRadius: 8
-                    }
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: { position: 'top', labels: { font: { size: 10 } } },
-                    tooltip: { callbacks: { label: (ctx) => `${ctx.raw}% de descuento` } }
-                },
-                scales: {
-                    y: { beginAtZero: true, max: 45, title: { display: true, text: 'Porcentaje de descuento (%)', color: '#7D7877', font: { size: 10 } }, ticks: { callback: (v) => v + '%', font: { size: 9 } } },
-                    x: { ticks: { font: { size: 9 } } }
-                }
-            }
+            type: 'bar', data: { labels: serviciosDescuentos, datasets: [{ label: '% de descuento', data: valoresDescuentos, backgroundColor: '#7D7877', borderRadius: 10, borderWidth: 2, borderColor: '#DB3109', datalabels: { anchor: 'end', align: 'top', formatter: (v) => v + '%', font: { weight: 'bold', size: 10 }, backgroundColor: 'rgba(255,255,255,0.8)', padding: 2, borderRadius: 8 } }] },
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top', labels: { font: { size: 10 } } }, tooltip: { callbacks: { label: (ctx) => `${ctx.raw}% de descuento` } } }, scales: { y: { beginAtZero: true, max: 45, title: { display: true, text: 'Porcentaje de descuento (%)', color: '#7D7877', font: { size: 10 } }, ticks: { callback: (v) => v + '%', font: { size: 9 } } }, x: { ticks: { font: { size: 9 } } } } }
         });
     }
 
@@ -613,40 +644,24 @@
         const tabs = document.querySelectorAll('.tab-btn');
         const tablaContainer = document.getElementById('tablaContainer');
         const graficoContainer = document.getElementById('graficoContainer');
-        
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 const target = tab.getAttribute('data-tab');
                 tabs.forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
-                if (target === 'grafico') {
-                    graficoContainer.style.display = 'block';
-                    tablaContainer.style.display = 'none';
-                    if (chartDescuentos) chartDescuentos.update();
-                } else {
-                    graficoContainer.style.display = 'none';
-                    tablaContainer.style.display = 'block';
-                }
+                if (target === 'grafico') { graficoContainer.style.display = 'block'; tablaContainer.style.display = 'none'; if(chartDescuentos) chartDescuentos.update(); }
+                else { graficoContainer.style.display = 'none'; tablaContainer.style.display = 'block'; }
             });
         });
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        initMap();
-        initChart();
-        renderTablaVacunas(true);
-        setupTabs();
-        
-        document.getElementById('selectConvenio').addEventListener('change', (e) => {
-            actualizarTodo(e.target.value);
-        });
-        
+        initMap(); initChart(); renderTablaVacunas(true); setupTabs();
+        document.getElementById('selectConvenio').addEventListener('change', (e) => actualizarTodo(e.target.value));
         document.getElementById('btnVerTodos').addEventListener('click', verTodosPuntos);
         document.getElementById('btnInicioMapa').addEventListener('click', inicioMapa);
-        document.getElementById('btnRegresar').addEventListener('click', () => history.back());
-        
+        document.getElementById('btnRegresarTop').addEventListener('click', () => history.back());
         actualizarTodo('ambos');
-        setTimeout(() => verTodosPuntos(), 500);
     });
 </script>
 </body>

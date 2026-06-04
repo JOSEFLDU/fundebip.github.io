@@ -270,9 +270,8 @@ function initCarouselSystem() {
             "img/tics/sistema.jpeg"
         ],
         donaciones: [
-            "img/carr1/hospitales.jpeg",
-            "img/carr1/canes.jpeg",
-            "img/carr1/caballos.jpeg"
+            "img/carr1/vph.jpeg",
+            "img/carr1/autismo.jpeg"           
         ],
         autogestion: [
             "img/autoges/medicina.jpeg",

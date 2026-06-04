@@ -12,6 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="_btn-fix.css">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -78,6 +79,37 @@
         .chart-panel canvas { max-height: 360px !important; width: 100% !important; height: auto !important; }
         .footer-chart, .footer { background: var(--fundebip-gray-dark); color: rgba(255,255,255,0.8); text-align: center; padding: 8px; font-size: 8px; }
         .footer { border-radius: 0 0 28px 28px; }
+        .top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            background: linear-gradient(135deg, var(--fundebip-gray), var(--fundebip-gray-dark));
+            color: white;
+            border-radius: 28px;
+            padding: 14px 20px;
+            box-shadow: 0 14px 36px -24px rgba(0,0,0,0.4);
+            border: 1px solid rgba(125,120,119,0.15);
+            backdrop-filter: blur(10px);
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .btn-back {
+            min-width: 170px;
+            padding: 10px 18px;
+            border-radius: 40px;
+            background-color: #1E70BF;
+            border: 1px solid #1E70BF;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
         @media (max-width: 1100px) { .kpi-superior { grid-template-columns: repeat(3, 1fr); } .main-layout { grid-template-columns: 1fr; gap: 20px; } }
         .custom-tooltip { background: var(--fundebip-gray-dark); color: white; border-radius: 20px; padding: 3px 10px; font-size: 10px; }
         .numero-marcador { background: transparent; font-weight: 900; text-shadow: 0px 0px 2px white; }
@@ -85,6 +117,13 @@
 </head>
 <body>
 <div class="dashboard">
+    <div class="top-bar">
+        <button class="btn-fundebip btn-back" id="btnRegresar"><i class="fas fa-arrow-left"></i> Regresar</button>
+        <div class="top-title">
+            <img src="../img/logo3.png" alt="FUNDEBIP" class="top-title-logo">
+            <span>FUNDEBIP</span>
+        </div>
+    </div>
     <!-- KPI superiores -->
     <div class="kpi-superior">
         <div class="kpi-superior-card"><div class="kpi-superior-label">TOTAL SILLAS</div><div class="kpi-superior-valor" id="kpiTotalSillas">65</div><div class="kpi-superior-sub">Ene - May 2026</div></div>
@@ -103,11 +142,6 @@
                 <select id="buscadorProvincia"><option value="">🔍 Buscar provincia...</option></select>
                 <button class="btn-fundebip" id="btnBuscar"><i class="fas fa-location-dot"></i> Ir</button>
                 <button class="btn-fundebip btn-secondary" id="btnInicio"><i class="fas fa-home"></i> Inicio</button>
-            </div>
-            <div style="padding: 0 16px 16px; margin-top: 18px;">
-                <button class="btn-fundebip" id="btnRegresar" style="width:100%; justify-content:center; background-color:#1E70BF !important; background-image:none !important; border: 1px solid #1E70BF !important; color:#ffffff !important; margin-top: 16px; border-radius: 40px;">
-                    <i class="fas fa-arrow-left"></i> Regresar
-                </button>
             </div>
         </div>
 

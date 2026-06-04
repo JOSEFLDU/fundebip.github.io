@@ -1,0 +1,15 @@
+<div class="top-bar">
+        <button class="btn-fundebip btn-back" id="btnRegresar"><i class="fas fa-arrow-left"></i> Regresar</button>
+        <div class="filtro-container">
+            <label><i class="fas fa-filter"></i> FILTRAR POR:</label>
+            <select id="selectFiltro" class="selector-filtro">
+                <option value="todos">📊 TODOS LOS INGRESOS</option>
+                <option value="arriendos">🏢 SOLO ARRIENDOS (Espacios físicos)</option>
+                <option value="polizas">💰 SOLO OTROS INGRESOS (Pólizas + Bancos)</option>
+                <option value="donaciones">🎁 SOLO DONACIONES</option>
+            </select>
+            <div class="leyenda-mapa">
+                <div class="leyenda-item"><div class="color-marker arriendos"></div><span>Espacios con arriendo (66)</span></div>
+            </div>
+        </div>
+    </div>

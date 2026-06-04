@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>FUNDEBIP - Gestión Presupuestaria 2026 | Informe Ene-May</title>
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', 'Segoe UI', 'Roboto', system-ui, sans-serif;
+            background: linear-gradient(145deg, #f0f2f5 0%, #e2e6ea 100%);
+            padding: 20px 16px;
+        }
+        :root {
+            --fundebip-red: #DB3109;
+            --fundebip-red-dark: #B82A07;
+            --fundebip-gray: #7D7877;
+            --fundebip-gray-dark: #5D5A59;
+            --fundebip-green: #2E7D32;
+            --fundebip-blue: #1e5799;
+            --fundebip-orange: #F5A623;
+            --shadow-lg: 0 20px 40px -12px rgba(0, 0, 0, 0.15);
+            --shadow-sm: 0 6px 14px rgba(0, 0, 0, 0.08);
+        }
+        .dashboard { max-width: 1800px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+        
+        .top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            background: linear-gradient(135deg, var(--fundebip-gray), var(--fundebip-gray-dark));
+            color: white;
+            border-radius: 28px;
+            padding: 14px 20px;
+            box-shadow: 0 14px 36px -24px rgba(0,0,0,0.4);
+            border: 1px solid rgba(125,120,119,0.15);
+            backdrop-filter: blur(10px);
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .top-bar label { color: white; }
+        .btn-back {
+            min-width: 170px;
+            padding: 10px 18px;
+            border-radius: 40px;
+            background-color: #1E70BF !important;
+            border: 1px solid #1E70BF !important;
+            color: #ffffff !important;
+            font-weight: 700;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
+        .filtro-container {
+            flex: 1;
+            background: transparent;
+            border-radius: 28px;
+            padding: 0;
+            box-shadow: none;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            border: none;
+        }
+        .filtro-container label { font-weight: 800; font-size: 0.85rem; color: #ffffff !important; }
+        .selector-filtro {
+            padding: 10px 20px;
+            border-radius: 40px;
+            border: 2px solid var(--fundebip-gray);
+            background: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            min-width: 250px;
+        }
+        .leyenda-mapa { display: flex; gap: 20px; margin-left: auto; font-size: 0.75rem; }
+        .leyenda-item { display: flex; align-items: center; gap: 8px; }
+        .color-marker { width: 20px; height: 20px; border-radius: 50%; }
+        .color-marker.arriendos { background: #2E7D32; border: 2px solid #DB3109; }
+        
+        .kpi-superior {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 16px;
+        }
+        .kpi-superior-card {
+            background: white; border-radius: 24px; padding: 14px 8px; text-align: center;
+            box-shadow: var(--shadow-sm); transition: all 0.3s ease;
+            border-top: 5px solid var(--fundebip-red);
+            border-bottom: 2px solid var(--fundebip-gray);
+        }
+        .kpi-superior-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); }
+        .kpi-superior-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #2C3E50; margin-bottom: 6px; }
+        .kpi-superior-valor { font-size: 22px; font-weight: 800; color: #000; margin: 4px 0; }
+        .kpi-superior-sub { font-size: 9px; font-weight: 600; color: var(--fundebip-gray-dark); background: rgba(125,120,119,0.1); display: inline-block; padding: 3px 10px; border-radius: 30px; margin-top: 4px; }
+        .kpi-ejecucion { background: linear-gradient(135deg, #FFF3E0, #FFE0B2); border-top-color: var(--fundebip-orange); }
+        .kpi-ejecucion .kpi-superior-valor { color: var(--fundebip-red); }
+        
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 0.9fr;
+            gap: 20px;
+            align-items: start;
+            margin-bottom: 20px;
+        }
+        
+        .summary-card {
+            background: white;
+            border-radius: 28px;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            border: 1px solid rgba(125,120,119,0.15);
+            margin-bottom: 20px;
+        }
+        .summary-header {
+            padding: 14px 20px;
+            background: linear-gradient(135deg, var(--fundebip-gray-dark), var(--fundebip-gray));
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .summary-header i { font-size: 1.3rem; }
+        .summary-header h3 { font-size: 0.9rem; font-weight: 700; }
+        .summary-body { padding: 16px 20px; }
+        
+        .ingreso-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eef2f5; }
+        .ingreso-label { font-weight: 600; font-size: 0.8rem; }
+        .ingreso-valor { font-weight: 800; color: var(--fundebip-green); font-size: 0.9rem; }
+        .ingreso-ejecucion { background: #FFF3E0; border-radius: 12px; margin-top: 8px; padding: 8px 12px; }
+        .ingreso-ejecucion .ingreso-valor { color: var(--fundebip-red); font-size: 1rem; }
+        
+        .tabla-provincias { width: 100%; border-collapse: collapse; font-size: 0.7rem; }
+        .tabla-provincias th { background: linear-gradient(135deg, #5D5A59, #3D3A39); color: white; padding: 8px 6px; font-size: 0.65rem; }
+        .tabla-provincias td { padding: 8px 6px; border-bottom: 1px solid #eef2f5; }
+        .tabla-provincias tr:hover td { background: rgba(219, 49, 9, 0.05); }
+        .tabla-provincias tr.seleccionada td { background: rgba(219, 49, 9, 0.2); border-left: 3px solid var(--fundebip-red); }
+        .badge-mora { background: #DB3109; color: white; border-radius: 20px; padding: 2px 8px; font-size: 0.65rem; }
+        
+        .map-panel {
+            background: white;
+            border-radius: 28px;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            border: 1px solid rgba(125,120,119,0.15);
+        }
+        #map { height: 320px; width: 100%; background: #e9f0f5; }
+        .map-controls { padding: 10px 12px; background: linear-gradient(135deg, var(--fundebip-gray-dark), #4a4746); display: flex; gap: 8px; justify-content: space-between; }
+        .btn-fundebip {
+            background: linear-gradient(135deg, var(--fundebip-red), var(--fundebip-red-dark));
+            color: white; border: none; padding: 6px 14px; border-radius: 40px; cursor: pointer;
+            font-weight: 700; font-size: 0.7rem; display: inline-flex; align-items: center; gap: 5px;
+        }
+        .btn-secondary { background: linear-gradient(135deg, var(--fundebip-gray), var(--fundebip-gray-dark)); }
+        
+        .gastos-principal {
+            background: white;
+            border-radius: 28px;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            border: 1px solid rgba(125,120,119,0.15);
+            margin-bottom: 20px;
+        }
+        .filtro-meses {
+            padding: 12px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eef2f5;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .filtro-meses label { font-weight: 700; font-size: 0.75rem; color: var(--fundebip-gray-dark); }
+        .mes-selector { padding: 6px 12px; border-radius: 30px; border: 1px solid var(--fundebip-gray); background: white; font-size: 0.75rem; cursor: pointer; }
+        .btn-filtrar-meses { background: var(--fundebip-red); color: white; border: none; padding: 6px 16px; border-radius: 30px; font-size: 0.7rem; font-weight: 600; cursor: pointer; }
+        .gastos-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 20px; padding: 20px; }
+        .gastos-tabla-wrapper { overflow-x: auto; }
+        .gastos-tabla { width: 100%; border-collapse: collapse; font-size: 0.7rem; }
+        .gastos-tabla th { 
+            background: linear-gradient(135deg, #5D5A59, #3D3A39); 
+            color: white; padding: 12px 6px; font-size: 0.72rem; font-weight: 700; 
+            text-align: center; 
+        }
+        .gastos-tabla td { padding: 8px 6px; border-bottom: 1px solid #eef2f5; text-align: center; font-weight: 500; }
+        .gastos-tabla td:first-child { text-align: center; font-weight: 800; background: #f8f9fa; }
+        .gastos-tabla tr:hover td { background: rgba(219,49,9,0.05); }
+        .total-row { background: #e9ecef; font-weight: 800; }
+        .total-row td { border-top: 2px solid var(--fundebip-red); font-weight: 800; }
+        .desviacion-positiva { color: #DB3109; font-weight: 700; }
+        .desviacion-negativa { color: #2E7D32; font-weight: 700; }
+        .desviacion-porcentaje { font-size: 0.65rem; margin-left: 4px; font-weight: 500; }
+        .desviacion-sin-dato { color: var(--fundebip-gray); font-weight: 500; }
+        
+        .gastos-chart { background: white; border-radius: 24px; }
+        .chart-header-enhanced {
+            background: linear-gradient(135deg, var(--fundebip-gray-dark), var(--fundebip-gray));
+            padding: 12px 16px;
+            border-radius: 20px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .chart-header-enhanced h4 {
+            color: white;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .chart-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 0.65rem;
+            font-weight: 600;
+        }
+        .gastos-chart canvas { max-height: 260px; width: 100%; margin-top: 10px; }
+        
+        .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+        .chart-box { background: white; border-radius: 28px; box-shadow: var(--shadow-lg); padding: 16px; border: 1px solid rgba(125,120,119,0.15); }
+        .chart-box h4 { font-size: 0.8rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; border-left: 4px solid var(--fundebip-red); padding-left: 12px; }
+        .chart-box canvas { max-height: 220px; width: 100% !important; }
+        
+        .footer { background: var(--fundebip-gray-dark); color: rgba(255,255,255,0.8); text-align: center; padding: 12px; font-size: 0.7rem; border-radius: 28px; margin-top: 20px; }
+        
+        @media (max-width: 1100px) {
+            .kpi-superior { grid-template-columns: repeat(3, 1fr); }
+            .main-layout { grid-template-columns: 1fr; }
+            .charts-row { grid-template-columns: 1fr; }
+            .gastos-grid { grid-template-columns: 1fr; }
+            .top-bar { flex-direction: column; align-items: stretch; }
+            .btn-back { width: 100%; }
+            .filtro-container { width: 100%; }
+            .leyenda-mapa { margin-left: 0; }
+        }
+        .progress-bar { background: #e8e8e8; border-radius: 20px; height: 8px; margin-top: 8px; }
+        .progress-fill { background: linear-gradient(90deg, var(--fundebip-red), #F57C00); height: 100%; border-radius: 20px; width: 0%; }
+        .custom-tooltip { background: var(--fundebip-gray-dark); color: white; border-radius: 20px; padding: 3px 10px; font-size: 10px; }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <div class="top-bar">
+        <button class="btn-fundebip btn-back" id="btnRegresar"><i class="fas fa-arrow-left"></i> Regresar</button>
+        <div class="filtro-container">
+            <label><i class="fas fa-filter"></i> FILTRAR POR:</label>
+            <select id="selectFiltro" class="selector-filtro">
+                <option value="todos">📊 TODOS LOS INGRESOS</option>
+                <option value="arriendos">🏢 SOLO ARRIENDOS (Espacios físicos)</option>
+                <option value="polizas">💰 SOLO OTROS INGRESOS (Pólizas + Bancos)</option>
+                <option value="donaciones">🎁 SOLO DONACIONES</option>
+            </select>
+            <div class="leyenda-mapa">
+                <div class="leyenda-item"><div class="color-marker arriendos"></div><span>Espacios con arriendo (66)</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="kpi-superior">
+        <div class="kpi-superior-card"><div class="kpi-superior-label">TOTAL INGRESOS</div><div class="kpi-superior-valor" id="kpiTotalIngresos">$159.874,52</div><div class="kpi-superior-sub">Ene - May 2026</div></div>
+        <div class="kpi-superior-card"><div class="kpi-superior-label">ARRIENDOS</div><div class="kpi-superior-valor" id="kpiArriendos">$92.002,74</div><div class="kpi-superior-sub">66 espacios físicos</div></div>
+        <div class="kpi-superior-card"><div class="kpi-superior-label">OTROS INGRESOS</div><div class="kpi-superior-valor" id="kpiPolizas">$35.487,14</div><div class="kpi-superior-sub">Pólizas + Bancos</div></div>
+        <div class="kpi-superior-card"><div class="kpi-superior-label">DONACIONES</div><div class="kpi-superior-valor" id="kpiDonaciones">$13.852,35</div><div class="kpi-superior-sub">Personas + Empresas</div></div>
+        <div class="kpi-superior-card kpi-ejecucion"><div class="kpi-superior-label">EJECUCIÓN PRESUP.</div><div class="kpi-superior-valor" id="kpiEjecucion">51,87%</div><div class="kpi-superior-sub">$192.182,24 / $370.480,28</div></div>
+        <div class="kpi-superior-card"><div class="kpi-superior-label">AYUDAS</div><div class="kpi-superior-valor" id="kpiAyudas">198</div><div class="kpi-superior-sub" id="ayudasSubDetalle">Solidarias:154 + Emergentes:44</div></div>
+    </div>
+
+    <div class="main-layout">
+        <div>
+            <div class="summary-card">
+                <div class="summary-header"><i class="fas fa-chart-line"></i><h3>RESUMEN EJECUTIVO · GESTIÓN PRESUPUESTARIA 2026</h3></div>
+                <div class="summary-body">
+                    <div class="ingreso-item"><span class="ingreso-label"><i class="fas fa-building"></i> Arriendos espacios físicos (66 espacios)</span><span class="ingreso-valor" id="resArriendos">$92.002,74</span></div>
+                    <div class="ingreso-item"><span class="ingreso-label"><i class="fas fa-chart-pie"></i> Intereses en pólizas</span><span class="ingreso-valor" id="resPolizas">$30.530,63</span></div>
+                    <div class="ingreso-item"><span class="ingreso-label"><i class="fas fa-university"></i> Otros Ingresos</span><span class="ingreso-valor" id="resBancos">$4.956,51</span></div>
+                    <div class="ingreso-item"><span class="ingreso-label"><i class="fas fa-hand-holding-heart"></i> Donaciones</span><span class="ingreso-valor" id="resDonaciones">$13.852,35</span></div>
+                    <div class="ingreso-item"><span class="ingreso-label"><i class="fas fa-truck"></i> Ingresos no Corrientes</span><span class="ingreso-valor" id="resOtros">$18.532,29</span></div>
+                    <!-- NUEVO ITEM: PRESUPUESTO ADICIONAL JULIO -->
+                    <div class="ingreso-item"><span class="ingreso-label"><i class="fas fa-calendar-plus"></i> Presupuesto Adicional julio</span><span class="ingreso-valor" id="resAdicionalJulio">$32.307,72</span></div>
+                    <div class="ingreso-ejecucion">
+                        <div class="ingreso-item" style="border-bottom: none;"><span class="ingreso-label"><i class="fas fa-chart-simple"></i> <strong>PRESUPUESTO EJECUTADO</strong></span><span class="ingreso-valor" id="resEjecutado" style="color:#DB3109; font-size:1.1rem;">$192.182,24</span></div>
+                        <div class="ingreso-item" style="border-bottom: none; padding-top: 4px;"><span class="ingreso-label">Presupuesto inicial anual</span><span class="ingreso-valor">$370.480,28</span></div>
+                        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width: 51.87%;"></div></div>
+                        <div class="ingreso-item" style="border-bottom: none; padding-top: 8px;"><span class="ingreso-label">Saldo por ejecutar</span><span class="ingreso-valor">$178.298,04</span></div>
+                    </div>
+                </div>
+            </div>            
+        </div>
+         <div>
+            <div class="map-panel">
+                <div id="map"></div>
+                <div class="map-controls">
+                    <button class="btn-fundebip" id="btnVerTodos"><i class="fas fa-map-pin"></i> Ver todos los puntos</button>
+                    <button class="btn-fundebip btn-secondary" id="btnInicioMapa"><i class="fas fa-home"></i> Inicio</button>
+                </div>
+            </div>
+        </div>
+    </div>  
+
+
+    <div class="gastos-principal">
+        <div class="summary-header"><i class="fas fa-chart-line"></i><h3>GASTOS MENSUALES 2026 · TABLA Y EVOLUCIÓN ACUMULADA</h3></div>
+        <div class="filtro-meses">
+            <label><i class="fas fa-calendar-alt"></i> FILTRAR POR RANGO DE MESES:</label>
+            <select id="mesDesde" class="mes-selector">
+                <option value="0">Ene</option><option value="1">Feb</option><option value="2">Mar</option><option value="3">Abr</option>
+                <option value="4">May</option><option value="5">Jun</option><option value="6">Jul</option><option value="7">Ago</option>
+                <option value="8">Sep</option><option value="9">Oct</option><option value="10">Nov</option><option value="11">Dic</option>
+            </select>
+            <span>a</span>
+            <select id="mesHasta" class="mes-selector">
+                <option value="0">Ene</option><option value="1">Feb</option><option value="2">Mar</option><option value="3">Abr</option>
+                <option value="4" selected>May</option><option value="5">Jun</option><option value="6">Jul</option><option value="7">Ago</option>
+                <option value="8">Sep</option><option value="9">Oct</option><option value="10">Nov</option><option value="11">Dic</option>
+            </select>
+            <button class="btn-filtrar-meses" id="btnFiltrarMeses"><i class="fas fa-filter"></i> Aplicar filtro</button>
+            <button class="btn-filtrar-meses" id="btnResetMeses" style="background: var(--fundebip-gray);"><i class="fas fa-undo"></i> Reiniciar</button>
+        </div>
+        <div class="gastos-grid">
+            <div class="gastos-tabla-wrapper">
+                <table class="gastos-tabla" id="tablaGastosMensual">
+                    <thead>
+                        <tr>
+                            <th style="text-align:center">📅 MESES</th>
+                            <th style="text-align:center">📊 PRESUPUESTO PROYECTADO</th>
+                            <th style="text-align:center">🔥 PRESUPUESTO EJECUTADO</th>
+                            <th style="text-align:center">📉 DESVIACIÓN (Ejec - Proy)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaGastosBody"></tbody>
+                    <tfoot id="tablaGastosFooter"></tfoot>
+                </table>
+            </div>
+            <div class="gastos-chart">
+                <div class="chart-header-enhanced">
+                    <h4><i class="fas fa-chart-line"></i> Presupuesto 2026: Ejecutado vs Proyectado</h4>
+                    
+                </div>
+                <canvas id="chartGastosAcumulados"></canvas>
+                <div style="font-size: 0.7rem; text-align: center; margin-top: 12px; color: var(--fundebip-gray-dark); background: #f8f9fa; padding: 6px; border-radius: 20px;">
+                    <i class="fas fa-chart-simple"></i> El gráfico se filtra por el rango de meses seleccionado | Desviación solo calculada hasta mayo (jun-dic: "-")
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <div>  
+            <div class="summary-card">
+                <div class="summary-header"><i class="fas fa-map-marked-alt"></i><h3>INGRESOS POR ARRIENDOS · POR PROVINCIA</h3></div>
+                <div class="summary-body">
+                    <table class="tabla-provincias" id="tablaProvincias">
+                        <thead><tr><th>PROVINCIA</th><th>ESPACIOS</th><th>ARRENDOS ENE-MAY</th><th>% APORTE</th><th>ESTADO</th></tr></thead>
+                        <tbody id="tablaProvinciasBody"></tbody>
+                        <tfoot id="tablaProvinciasFooter" style="background: #e9ecef; font-weight: 800;"></tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="chart-box"><h4><i class="fas fa-chart-line"></i> Evolución mensual de ingresos (Ene - May 2026)</h4><canvas id="chartEvolucionMensual"></canvas></div>
+       
+    </div>
+
+    
+
+    <div class="charts-row">
+        
+        <div class="chart-box"><h4><i class="fas fa-chart-pie"></i> Composición de ingresos (Ene - May 2026)</h4><canvas id="chartComposicion"></canvas></div>
+    </div>
+
+    <div class="footer"><i class="fas fa-calculator"></i> INFORME DE GESTIÓN PRESUPUESTARIA · FUNDEBIP · Del 01 de enero al 31 de mayo de 2026 · 198 ayudas entregadas (154 Solidarias + 44 Emergentes)</div>
+</div>
+
+<script>
+    Chart.register(ChartDataLabels);
+    Chart.defaults.set('plugins.datalabels', { font: { weight: 'bold', size: 9 }, anchor: 'end', align: 'top', offset: 4, color: '#2C3E50' });
+
+    const provinciasData = [
+        { provincia: "PICHINCHA", espacios: 28, arriendosMensual: 328.50, mora: 3 },
+        { provincia: "GUAYAS", espacios: 12, arriendosMensual: 425.00, mora: 1 },
+        { provincia: "MANABÍ", espacios: 5, arriendosMensual: 380.00, mora: 0 },
+        { provincia: "AZUAY", espacios: 2, arriendosMensual: 320.00, mora: 0 },
+        { provincia: "LOS RÍOS", espacios: 2, arriendosMensual: 792.00, mora: 0 },
+        { provincia: "EL ORO", espacios: 2, arriendosMensual: 280.00, mora: 0 },
+        { provincia: "BOLÍVAR", espacios: 2, arriendosMensual: 310.00, mora: 0 },
+        { provincia: "ESMERALDAS", espacios: 2, arriendosMensual: 350.00, mora: 0 },
+        { provincia: "CHIMBORAZO", espacios: 2, arriendosMensual: 340.00, mora: 0 },
+        { provincia: "LOJA", espacios: 3, arriendosMensual: 283.33, mora: 0 },
+        { provincia: "SANTO DOMINGO", espacios: 2, arriendosMensual: 300.00, mora: 0 },
+        { provincia: "TUNGURAHUA", espacios: 1, arriendosMensual: 230.00, mora: 0 },
+        { provincia: "IMBABURA", espacios: 1, arriendosMensual: 360.00, mora: 0 },
+        { provincia: "SANTA ELENA", espacios: 1, arriendosMensual: 692.00, mora: 1 },
+        { provincia: "PASTAZA", espacios: 1, arriendosMensual: 220.00, mora: 0 }
+    ];
+    provinciasData.forEach(p => { p.totalArriendos = p.arriendosMensual * 5; });
+    const totalArriendosGeneral = provinciasData.reduce((sum, p) => sum + p.totalArriendos, 0);
+    
+    const ingresosMensuales = {
+        enero: { arriendos: 19758.06, polizas: 5860.79, bancos: 1103.29, donaciones: 654.50 },
+        febrero: { arriendos: 15299.94, polizas: 5019.04, bancos: 980.06, donaciones: 8058.61 },
+        marzo: { arriendos: 24236.51, polizas: 8816.29, bancos: 995.25, donaciones: 4107.40 },
+        abril: { arriendos: 15647.94, polizas: 5903.99, bancos: 1007.88, donaciones: 409.01 },
+        mayo: { arriendos: 19758.06, polizas: 4930.52, bancos: 870.03, donaciones: 0 }
+    };
+    
+    const totalArriendos = 92002.74;
+    const totalPolizas = 30530.63;
+    const totalBancos = 4956.51;
+    const totalDonaciones = 13852.35;
+    const totalNoCorrientes = 18532.29;
+    const totalAdicionalJulio = 32307.72;
+    const totalOtros = totalNoCorrientes; // Mantenemos compatibilidad con variables existentes
+    const presupuestoInicial = 370480.28;
+    const presupuestoEjecutado = 192182.24;
+    const ayudasSolidarias = 154;
+    const ayudasEmergentes = 44;
+    const totalAyudas = ayudasSolidarias + ayudasEmergentes;
+    
+    const mesesLabels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    const gastoProyectadoMensual = 30873.35667;
+    const gastosProyectadosReales = mesesLabels.map(() => gastoProyectadoMensual);
+    const gastosEjecutadosReales = [18959.82, 33400.22, 42958.38, 56043.57, 40820.25, 0, 0, 0, 0, 0, 0, 0];
+    
+    // Acumulados totales
+    let acumuladoProyectadoCompleto = [];
+    let acumuladoEjecutadoCompleto = [];
+    let sumaProy = 0, sumaEjec = 0;
+    for (let i = 0; i < mesesLabels.length; i++) {
+        sumaProy += gastosProyectadosReales[i];
+        sumaEjec += gastosEjecutadosReales[i];
+        acumuladoProyectadoCompleto.push(sumaProy);
+        acumuladoEjecutadoCompleto.push(sumaEjec);
+    }
+    
+    function formatMoney(value) { return value.toLocaleString('es-EC', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function formatK(value) { return (value / 1000).toFixed(1) + 'k'; }
+    
+    let map, markers = [];
+    let chartEvolucion, chartComposicion, chartGastosAcum;
+    let currentFiltroMeses = { desde: 0, hasta: 11 };
+    
+    function initMap() {
+        map = L.map('map').setView([-1.5, -78.8], 6);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap', maxZoom: 12 }).addTo(map);
+        cargarMarcadores();
+        setTimeout(() => {
+            if (markers.length) {
+                const bounds = markers.map(m => m.getLatLng());
+                map.fitBounds(bounds);
+            }
+        }, 300);
+    }
+    
+    function createLocationIcon(color, size = 30) {
+        return L.divIcon({ html: `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"><i class="fas fa-map-marker-alt" style="color: white; font-size: ${size-12}px;"></i></div>`, iconSize: [size, size], popupAnchor: [0, -size/2], className: 'custom-location-icon' });
+    }
+    
+    function cargarMarcadores() {
+        markers.forEach(m => map.removeLayer(m));
+        markers = [];
+        const coordsProvincias = { 'PICHINCHA': [-0.1835, -78.4985], 'GUAYAS': [-2.189, -79.889], 'MANABÍ': [-1.032, -80.460], 'AZUAY': [-2.897, -79.004], 'LOS RÍOS': [-1.816, -79.534], 'EL ORO': [-3.258, -79.961], 'BOLÍVAR': [-1.600, -79.000], 'ESMERALDAS': [0.978, -79.652], 'CHIMBORAZO': [-1.674, -78.647], 'LOJA': [-3.993, -79.204], 'SANTO DOMINGO': [-0.253, -79.175], 'TUNGURAHUA': [-1.241, -78.619], 'IMBABURA': [0.351, -78.122], 'SANTA ELENA': [-2.226, -80.859], 'PASTAZA': [-1.483, -78.002] };
+        provinciasData.forEach(prov => {
+            const coords = coordsProvincias[prov.provincia];
+            if (coords) {
+                const color = prov.mora > 0 ? '#DB3109' : '#2E7D32';
+                const icon = createLocationIcon(color, 28);
+                const marker = L.marker(coords, { icon: icon }).addTo(map);
+                marker.bindPopup(`<b>${prov.provincia}</b><br>🏢 Espacios: ${prov.espacios}<br>💰 Arriendos Ene-May: $${formatMoney(prov.totalArriendos)}<br>${prov.mora > 0 ? '<span style="color:#DB3109;">⚠️ ' + prov.mora + ' arrendatario(s) en mora</span>' : '✅ Al día'}`);
+                markers.push(marker);
+            }
+        });
+    }
+    
+    function verTodosPuntos() { if (markers.length) map.fitBounds(markers.map(m => m.getLatLng())); }
+    function inicioMapa() { map.setView([-1.5, -78.8], 6); }
+    
+    function renderTablaProvincias() {
+        const tbody = document.getElementById('tablaProvinciasBody');
+        const ordenadas = [...provinciasData].sort((a, b) => b.totalArriendos - a.totalArriendos);
+        let html = '';
+        ordenadas.forEach(prov => {
+            const porcentaje = (prov.totalArriendos / totalArriendosGeneral) * 100;
+            html += `<tr data-provincia="${prov.provincia}" onclick="seleccionarProvincia('${prov.provincia}')">
+                        <td style="font-weight:600;">${prov.provincia}</td><td style="text-align:center;">${prov.espacios}</td>
+                        <td style="text-align:right; font-weight:bold;">$${formatMoney(prov.totalArriendos)}</td>
+                        <td style="text-align:center;">${porcentaje.toFixed(1)}%</td>
+                        <td style="text-align:center;">${prov.mora > 0 ? `<span class="badge-mora">${prov.mora} en mora</span>` : '✅ Al día'}</td>
+                      </tr>`;
+        });
+        tbody.innerHTML = html;
+        document.getElementById('tablaProvinciasFooter').innerHTML = `<tr><td style="text-align:center; font-weight:800;">TOTAL NACIONAL</td><td style="text-align:center; font-weight:800;">${provinciasData.reduce((s,p)=>s+p.espacios,0)}</td><td style="text-align:right; font-weight:800;">$${formatMoney(totalArriendosGeneral)}</td><td colspan="2"></td></tr>`;
+    }
+    
+    window.seleccionarProvincia = function(provincia) {
+        document.querySelectorAll('#tablaProvinciasBody tr').forEach(row => row.classList.remove('seleccionada'));
+        const selectedRow = document.querySelector(`#tablaProvinciasBody tr[data-provincia="${provincia}"]`);
+        if (selectedRow) selectedRow.classList.add('seleccionada');
+        document.getElementById('selectFiltro').value = provincia;
+        actualizarTodo(provincia);
+        const coordsProv = { 'PICHINCHA': [-0.1835, -78.4985], 'GUAYAS': [-2.189, -79.889], 'MANABÍ': [-1.032, -80.460], 'AZUAY': [-2.897, -79.004], 'LOS RÍOS': [-1.816, -79.534], 'EL ORO': [-3.258, -79.961], 'BOLÍVAR': [-1.600, -79.000], 'ESMERALDAS': [0.978, -79.652], 'CHIMBORAZO': [-1.674, -78.647], 'LOJA': [-3.993, -79.204], 'SANTO DOMINGO': [-0.253, -79.175], 'TUNGURAHUA': [-1.241, -78.619], 'IMBABURA': [0.351, -78.122], 'SANTA ELENA': [-2.226, -80.859], 'PASTAZA': [-1.483, -78.002] };
+        if (coordsProv[provincia]) map.setView(coordsProv[provincia], 9);
+    };
+    
+    function actualizarTodo(filtro) {
+        const provinciaSeleccionada = provinciasData.find(p => p.provincia === filtro);
+        const esProvincia = provinciaSeleccionada !== undefined;
+        let arriendosMostrado = 0, polizasMostrado = 0, bancosMostrado = 0, donacionesMostrado = 0, adicionalMostrado = 0, totalMostrado = 0;
+        if (esProvincia) { 
+            arriendosMostrado = provinciaSeleccionada.totalArriendos; 
+            totalMostrado = arriendosMostrado; 
+        }
+        else if (filtro === 'arriendos') { 
+            arriendosMostrado = totalArriendos; 
+            totalMostrado = totalArriendos; 
+        }
+        else if (filtro === 'polizas') { 
+            polizasMostrado = totalPolizas; 
+            bancosMostrado = totalBancos; 
+            totalMostrado = totalPolizas + totalBancos; 
+        }
+        else if (filtro === 'donaciones') { 
+            donacionesMostrado = totalDonaciones; 
+            totalMostrado = donacionesMostrado; 
+        }
+        else { 
+            arriendosMostrado = totalArriendos; 
+            polizasMostrado = totalPolizas; 
+            bancosMostrado = totalBancos; 
+            donacionesMostrado = totalDonaciones; 
+            adicionalMostrado = totalAdicionalJulio;
+            totalMostrado = totalArriendos + totalPolizas + totalBancos + totalDonaciones + totalNoCorrientes + totalAdicionalJulio; 
+        }
+        document.getElementById('kpiTotalIngresos').innerText = '$' + formatMoney(totalMostrado);
+        document.getElementById('kpiArriendos').innerText = '$' + formatMoney(arriendosMostrado);
+        document.getElementById('kpiPolizas').innerText = '$' + formatMoney(polizasMostrado + bancosMostrado);
+        document.getElementById('kpiDonaciones').innerText = '$' + formatMoney(donacionesMostrado);
+        document.getElementById('kpiEjecucion').innerHTML = ((presupuestoEjecutado / presupuestoInicial) * 100).toFixed(2) + '%';
+        document.getElementById('kpiAyudas').innerHTML = totalAyudas;
+        document.getElementById('ayudasSubDetalle').innerHTML = `Solidarias:${ayudasSolidarias} + Emergentes:${ayudasEmergentes}`;
+        document.getElementById('resArriendos').innerHTML = '$' + formatMoney(arriendosMostrado);
+        document.getElementById('resPolizas').innerHTML = '$' + formatMoney(esProvincia ? 0 : polizasMostrado);
+        document.getElementById('resBancos').innerHTML = '$' + formatMoney(esProvincia ? 0 : bancosMostrado);
+        document.getElementById('resDonaciones').innerHTML = '$' + formatMoney(esProvincia ? 0 : donacionesMostrado);
+        document.getElementById('resOtros').innerHTML = esProvincia ? '$0,00' : '$' + formatMoney(totalNoCorrientes);
+        document.getElementById('resAdicionalJulio').innerHTML = esProvincia ? '$0,00' : '$' + formatMoney(totalAdicionalJulio);
+        document.getElementById('resEjecutado').innerHTML = '$' + formatMoney(presupuestoEjecutado);
+        document.getElementById('progressFill').style.width = ((presupuestoEjecutado / presupuestoInicial) * 100) + '%';
+        
+        let nuevosValores = [totalArriendos, totalPolizas, totalBancos, totalDonaciones, totalNoCorrientes, totalAdicionalJulio];
+        if (esProvincia) nuevosValores = [arriendosMostrado, 0, 0, 0, 0, 0];
+        else if (filtro === 'arriendos') nuevosValores = [arriendosMostrado, 0, 0, 0, 0, 0];
+        else if (filtro === 'polizas') nuevosValores = [0, polizasMostrado, bancosMostrado, 0, 0, 0];
+        else if (filtro === 'donaciones') nuevosValores = [0, 0, 0, donacionesMostrado, 0, 0];
+        if (chartComposicion) { 
+            chartComposicion.data.datasets[0].data = nuevosValores; 
+            chartComposicion.update(); 
+        }
+        
+        let datosEvolucion = [];
+        for (let mes of ['enero', 'febrero', 'marzo', 'abril', 'mayo']) {
+            const d = ingresosMensuales[mes];
+            let totalMes = 0;
+            if (esProvincia) totalMes = provinciaSeleccionada.arriendosMensual;
+            else if (filtro === 'arriendos') totalMes = d.arriendos;
+            else if (filtro === 'polizas') totalMes = d.polizas + d.bancos;
+            else if (filtro === 'donaciones') totalMes = d.donaciones;
+            else totalMes = d.arriendos + d.polizas + d.bancos + d.donaciones;
+            datosEvolucion.push(totalMes);
+        }
+        if (chartEvolucion) { 
+            chartEvolucion.data.datasets[0].data = datosEvolucion; 
+            chartEvolucion.update(); 
+        }
+    }
+    
+    function renderTablaGastosConFiltro() {
+        const tbody = document.getElementById('tablaGastosBody');
+        let html = '';
+        let totalProyectadoFiltrado = 0;
+        let totalEjecutadoFiltrado = 0;
+        let totalDesviacionFiltrada = 0;
+        
+        for (let i = currentFiltroMeses.desde; i <= currentFiltroMeses.hasta; i++) {
+            const proyectado = gastosProyectadosReales[i];
+            const ejecutado = gastosEjecutadosReales[i];
+            
+            totalProyectadoFiltrado += proyectado;
+            totalEjecutadoFiltrado += ejecutado;
+            
+            // Desviación solo hasta mayo (índice 4)
+            if (i <= 4) {
+                const desviacion = ejecutado - proyectado;
+                const porcentajeDesviacion = proyectado !== 0 ? (desviacion / proyectado) * 100 : 0;
+                totalDesviacionFiltrada += desviacion;
+                const desviacionClass = desviacion < 0 ? 'desviacion-negativa' : 'desviacion-positiva';
+                const desviacionSigno = desviacion >= 0 ? '+' : '';
+                const porcentajeSigno = porcentajeDesviacion >= 0 ? '+' : '';
+                
+                html += `<tr>
+                            <td style="text-align:center; font-weight:800;">${mesesLabels[i]}</td>
+                            <td style="text-align:center;">$${formatMoney(proyectado)}</td>
+                            <td style="text-align:center;">$${formatMoney(ejecutado)}</td>
+                            <td style="text-align:center;" class="${desviacionClass}">
+                                ${desviacionSigno}$${formatMoney(Math.abs(desviacion))} 
+                                <span class="desviacion-porcentaje">(${porcentajeSigno}${porcentajeDesviacion.toFixed(1)}%)</span>
+                            </td>
+                          </tr>`;
+            } else {
+                // Para meses después de mayo, mostrar guión en desviación
+                html += `<tr>
+                            <td style="text-align:center; font-weight:800;">${mesesLabels[i]}</td>
+                            <td style="text-align:center;">$${formatMoney(proyectado)}</td>
+                            <td style="text-align:center;">$${formatMoney(ejecutado)}</td>
+                            <td style="text-align:center;" class="desviacion-sin-dato">—</td>
+                          </tr>`;
+            }
+        }
+        
+        // Solo mostrar total de desviación si el rango incluye meses hasta mayo
+        const tieneMesesHastaMayo = currentFiltroMeses.desde <= 4;
+        if (tieneMesesHastaMayo) {
+            const desviacionTotalClass = totalDesviacionFiltrada < 0 ? 'desviacion-negativa' : 'desviacion-positiva';
+            const desviacionTotalSigno = totalDesviacionFiltrada >= 0 ? '+' : '';
+            const porcentajeTotalDesviacion = totalProyectadoFiltrado !== 0 ? (totalDesviacionFiltrada / totalProyectadoFiltrado) * 100 : 0;
+            const porcentajeTotalSigno = porcentajeTotalDesviacion >= 0 ? '+' : '';
+            
+            html += `<tr class="total-row">
+                        <td style="text-align:center;"><strong>TOTAL</strong></td>
+                        <td style="text-align:center;"><strong>$${formatMoney(totalProyectadoFiltrado)}</strong></td>
+                        <td style="text-align:center;"><strong>$${formatMoney(totalEjecutadoFiltrado)}</strong></td>
+                        <td style="text-align:center;" class="${desviacionTotalClass}">
+                            <strong>${desviacionTotalSigno}$${formatMoney(Math.abs(totalDesviacionFiltrada))}</strong>
+                            <span class="desviacion-porcentaje">(${porcentajeTotalSigno}${porcentajeTotalDesviacion.toFixed(1)}%)</span>
+                        </td>
+                      <tr>`;
+        } else {
+            html += `<tr class="total-row">
+                        <td style="text-align:center;"><strong>TOTAL</strong></td>
+                        <td style="text-align:center;"><strong>$${formatMoney(totalProyectadoFiltrado)}</strong></td>
+                        <td style="text-align:center;"><strong>$${formatMoney(totalEjecutadoFiltrado)}</strong></td>
+                        <td style="text-align:center;" class="desviacion-sin-dato"><strong>—</strong></td>
+                      </tr>`;
+        }
+        
+        document.getElementById('tablaGastosBody').innerHTML = html;
+        actualizarGraficoAcumuladoPorFiltro();
+    }
+    
+    function actualizarGraficoAcumuladoPorFiltro() {
+        if (!chartGastosAcum) return;
+        const desde = currentFiltroMeses.desde;
+        const hasta = currentFiltroMeses.hasta;
+        let datosProyectadoFiltrados = [];
+        let datosEjecutadoFiltrados = [];
+        for (let i = 0; i < mesesLabels.length; i++) {
+            if (i >= desde && i <= hasta) {
+                datosProyectadoFiltrados.push(acumuladoProyectadoCompleto[i]);
+                if (i <= 4) {
+                    datosEjecutadoFiltrados.push(acumuladoEjecutadoCompleto[i]);
+                } else {
+                    datosEjecutadoFiltrados.push(null);
+                }
+            } else {
+                datosProyectadoFiltrados.push(null);
+                datosEjecutadoFiltrados.push(null);
+            }
+        }
+        chartGastosAcum.data.datasets[0].data = datosProyectadoFiltrados;
+        chartGastosAcum.data.datasets[1].data = datosEjecutadoFiltrados;
+        chartGastosAcum.update();
+    }
+    
+    function initCharts() {
+        const ctxEvo = document.getElementById('chartEvolucionMensual').getContext('2d');
+        chartEvolucion = new Chart(ctxEvo, { type: 'bar', data: { labels: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo'], datasets: [{ label: 'Ingresos (USD)', data: [27376.64, 29370.61, 34155.45, 22968.82, 25558.61], backgroundColor: '#7D7877', borderRadius: 8, borderColor: '#DB3109', borderWidth: 1, datalabels: { anchor: 'end', align: 'top', formatter: (v) => '$' + v.toLocaleString('es-EC', {minimumFractionDigits:0}), font: { size: 9 } } }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'top' }, tooltip: { callbacks: { label: (ctx) => '$' + ctx.raw.toLocaleString('es-EC', {minimumFractionDigits:2}) } } }, scales: { y: { beginAtZero: true, title: { display: true, text: 'USD' }, ticks: { callback: (v) => '$' + v.toLocaleString('es-EC') } } } } });
+        
+        const ctxComp = document.getElementById('chartComposicion').getContext('2d');
+        chartComposicion = new Chart(ctxComp, { type: 'pie', data: { labels: ['Arriendos', 'Intereses Pólizas', 'Intereses Bancos', 'Donaciones', 'Ingresos no Corrientes', 'Presupuesto Adicional julio'], datasets: [{ data: [totalArriendos, totalPolizas, totalBancos, totalDonaciones, totalNoCorrientes, totalAdicionalJulio], backgroundColor: ['#2E7D32', '#1e5799', '#4A90D9', '#F5A623', '#DB3109', '#9C27B0'], borderWidth: 2, borderColor: 'white', datalabels: { formatter: (v, ctx) => { const total = totalArriendos + totalPolizas + totalBancos + totalDonaciones + totalNoCorrientes + totalAdicionalJulio; const pct = ((v / total) * 100).toFixed(1); return v > 5000 ? `${pct}%` : ''; }, color: 'white', font: { weight: 'bold', size: 11 } } }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'right', labels: { font: { size: 9 } } }, tooltip: { callbacks: { label: (ctx) => `${ctx.label}: $${ctx.raw.toLocaleString('es-EC', {minimumFractionDigits:2})}` } } } } });
+        
+        const ctxGastos = document.getElementById('chartGastosAcumulados').getContext('2d');
+        chartGastosAcum = new Chart(ctxGastos, {
+            type: 'line', 
+            data: { 
+                labels: mesesLabels, 
+                datasets: [
+                    { 
+                        label: 'Presupuesto Proyectado Acumulado', 
+                        data: acumuladoProyectadoCompleto, 
+                        borderColor: '#1e5799', 
+                        backgroundColor: 'rgba(30,87,153,0.2)', 
+                        borderWidth: 3, 
+                        pointRadius: 4, 
+                        pointBackgroundColor: '#1e5799', 
+                        pointBorderColor: 'white', 
+                        tension: 0.2, 
+                        fill: true,
+                        datalabels: { anchor: 'end', align: 'top', formatter: (v) => v ? formatK(v) : '', font: { weight: 'bold', size: 8 }, color: '#1e5799' } 
+                    }, 
+                    { 
+                        label: 'Presupuesto Ejecutado Acumulado', 
+                        data: acumuladoEjecutadoCompleto.map((v, i) => i <= 4 ? v : null), 
+                        borderColor: '#2E7D32', 
+                        backgroundColor: 'rgba(46,125,50,0.15)', 
+                        borderWidth: 3, 
+                        pointRadius: 5, 
+                        pointBackgroundColor: '#2E7D32', 
+                        pointBorderColor: 'white', 
+                        tension: 0.2, 
+                        fill: true,
+                        datalabels: { anchor: 'end', align: 'bottom', formatter: (v, ctx) => { if (ctx.dataIndex < 5 && v !== null && v > 0) return formatK(v); return ''; }, font: { weight: 'bold', size: 8 }, color: '#2E7D32' } 
+                    }
+                ] 
+            }, 
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: true, 
+                plugins: { 
+                    tooltip: { callbacks: { label: (ctx) => ctx.raw !== null ? `${ctx.dataset.label}: $${formatMoney(ctx.raw)}` : '' } }, 
+                    datalabels: { display: true } 
+                }, 
+                scales: { y: { beginAtZero: true, title: { display: true, text: 'USD Acumulado' }, ticks: { callback: (v) => '$' + v.toLocaleString('es-EC') } } } 
+            }
+        });
+        actualizarGraficoAcumuladoPorFiltro();
+    }
+    
+    function aplicarFiltroMeses() {
+        const desde = parseInt(document.getElementById('mesDesde').value);
+        const hasta = parseInt(document.getElementById('mesHasta').value);
+        if (desde <= hasta) {
+            currentFiltroMeses = { desde, hasta };
+            renderTablaGastosConFiltro();
+        } else { alert("El mes 'desde' debe ser menor o igual al mes 'hasta'"); }
+    }
+    
+    function resetFiltroMeses() {
+        document.getElementById('mesDesde').value = '0';
+        document.getElementById('mesHasta').value = '11';
+        currentFiltroMeses = { desde: 0, hasta: 11 };
+        renderTablaGastosConFiltro();
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => { 
+        initMap(); renderTablaProvincias(); initCharts(); renderTablaGastosConFiltro();
+        document.getElementById('selectFiltro').addEventListener('change', (e) => { document.querySelectorAll('#tablaProvinciasBody tr').forEach(row => row.classList.remove('seleccionada')); actualizarTodo(e.target.value); });
+        document.getElementById('btnVerTodos').addEventListener('click', verTodosPuntos);
+        document.getElementById('btnInicioMapa').addEventListener('click', inicioMapa);
+        document.getElementById('btnRegresar').addEventListener('click', () => history.back());
+        document.getElementById('btnFiltrarMeses').addEventListener('click', aplicarFiltroMeses);
+        document.getElementById('btnResetMeses').addEventListener('click', resetFiltroMeses);
+        actualizarTodo('todos');
+    });
+</script>
+</body>
+</html>

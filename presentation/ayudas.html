@@ -3,8 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>FUNDEBIP TRABAJO SOCIAL</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>FUNDEBIP TRABAJO SOCIAL - Dashboard Actualizado</title>
     <!-- Leaflet CSS & JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -44,11 +44,69 @@
             flex-direction: column;
             gap: 22px;
         }
+        .top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            background: linear-gradient(135deg, var(--fundebip-gray), var(--fundebip-gray-dark));
+            color: white;
+            border-radius: 28px;
+            padding: 14px 20px;
+            box-shadow: 0 14px 36px -24px rgba(0,0,0,0.4);
+            border: 1px solid rgba(125,120,119,0.15);
+            backdrop-filter: blur(10px);
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .btn-back {
+            min-width: 170px;
+            padding: 10px 18px;
+            border-radius: 40px;
+            background-color: #1E70BF;
+            border: 1px solid #1E70BF;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .btn-fundebip {
+            background: linear-gradient(135deg, var(--fundebip-red), var(--fundebip-red-dark));
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.7rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--fundebip-gray), var(--fundebip-gray-dark));
+        }
+        .top-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 800;
+            font-size: 1.2rem;
+        }
+        .top-title-logo {
+            height: 38px;
+        }
 
         /* KPI superiores */
         .kpi-superior {
             display: grid;
-            grid-template-columns: repeat(6, 1fr);
+            grid-template-columns: repeat(7, 1fr);
             gap: 16px;
         }
 
@@ -125,24 +183,6 @@
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
-        }
-
-        .btn-fundebip {
-            background: linear-gradient(135deg, var(--fundebip-red), var(--fundebip-red-dark));
-            color: white;
-            border: none;
-            padding: 6px 14px;
-            border-radius: 40px;
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 0.7rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .btn-secondary {
-            background: linear-gradient(135deg, var(--fundebip-gray), var(--fundebip-gray-dark));
         }
 
         select {
@@ -399,7 +439,7 @@
 
         @media (max-width: 1100px) {
             .kpi-superior {
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-columns: repeat(4, 1fr);
             }
             .main-layout {
                 grid-template-columns: 1fr;
@@ -425,14 +465,21 @@
 
 <body>
 <div class="dashboard">
-    <!-- KPI -->
+    <div class="top-bar">
+        <button class="btn-fundebip btn-back" id="btnRegresar"><i class="fas fa-arrow-left"></i> Regresar</button>
+        <div class="top-title">
+            <span>FUNDEBIP · TRABAJO SOCIAL</span>
+        </div>
+    </div>
+    <!-- KPI ACTUALIZADOS: TOTAL AYUDAS 198, EMERGENTES 44, SINIESTROS 18 -->
     <div class="kpi-superior">
-        <div class="kpi-superior-card"><div class="kpi-superior-label">TOTAL AYUDAS</div><div class="kpi-superior-valor">157</div><div class="kpi-superior-sub">Ene - May 2026</div></div>
-        <div class="kpi-superior-card"><div class="kpi-superior-label">AYUDA ECONÓMICA</div><div class="kpi-superior-valor">98</div><div class="kpi-superior-sub">$45.363,68</div></div>
-        <div class="kpi-superior-card"><div class="kpi-superior-label">AYUDA TÉCNICA/MED</div><div class="kpi-superior-valor">40</div><div class="kpi-superior-sub">$29.564,07</div></div>
-        <div class="kpi-superior-card"><div class="kpi-superior-label">SINIESTROS</div><div class="kpi-superior-valor">19</div><div class="kpi-superior-sub">$8.251,00</div></div>
-        <div class="kpi-superior-card"><div class="kpi-superior-label">MONTO TOTAL</div><div class="kpi-superior-valor">$83.179</div><div class="kpi-superior-sub">Ejecutado</div></div>
-        <div class="kpi-superior-card"><div class="kpi-superior-label">PRESUPUESTO</div><div class="kpi-superior-valor">$159.341</div><div class="kpi-superior-sub">52,2% ejecutado</div></div>
+        <div class="kpi-superior-card"><div class="kpi-superior-label">TOTAL AYUDAS</div><div class="kpi-superior-valor">198</div><div class="kpi-superior-sub">Ene - May 2026</div></div>
+        <div class="kpi-superior-card"><div class="kpi-superior-label">ECONÓMICAS</div><div class="kpi-superior-valor">97</div><div class="kpi-superior-sub">$45.363,68</div></div>
+        <div class="kpi-superior-card"><div class="kpi-superior-label">TERAPIAS - MEDICINA</div><div class="kpi-superior-valor">39</div><div class="kpi-superior-sub">$29.564,07</div></div>
+        <div class="kpi-superior-card"><div class="kpi-superior-label">SINIESTROS</div><div class="kpi-superior-valor">18</div><div class="kpi-superior-sub">$8.251,00</div></div>
+        <div class="kpi-superior-card"><div class="kpi-superior-label">HOSPITALARIAS</div><div class="kpi-superior-valor">44</div><div class="kpi-superior-sub">$5.293,00</div></div>
+        <div class="kpi-superior-card"><div class="kpi-superior-label">MONTO TOTAL</div><div class="kpi-superior-valor">$88.471,75</div><div class="kpi-superior-sub">Ejecutado</div></div>
+        <div class="kpi-superior-card"><div class="kpi-superior-label">PRESUPUESTO</div><div class="kpi-superior-valor">$159.341</div><div class="kpi-superior-sub">55,5% ejecutado</div></div>
     </div>
 
     <div class="main-layout">
@@ -443,11 +490,6 @@
                 <select id="buscadorProvincia"><option value="">🔍 Buscar provincia...</option></select>
                 <button class="btn-fundebip" id="btnBuscar"><i class="fas fa-location-dot"></i> Ir</button>
                 <button class="btn-fundebip btn-secondary" id="btnInicio"><i class="fas fa-home"></i> Inicio</button>
-            </div>
-            <div style="padding: 0 16px 16px; margin-top: 18px;">
-                <button class="btn-fundebip" id="btnRegresar" style="width:100%; justify-content:center; background-color:#1E70BF !important; background-image:none !important; border: 1px solid #1E70BF !important; color:#ffffff !important; margin-top: 16px; border-radius: 40px;">
-                    <i class="fas fa-arrow-left"></i> Regresar
-                </button>
             </div>
         </div>
 
@@ -461,12 +503,12 @@
                 <div class="ejecucion-title"><i class="fas fa-chart-line"></i> EJECUCIÓN PRESUPUESTARIA</div>
                 <div class="presupuesto-grid">
                     <div class="presupuesto-card"><div class="presupuesto-label">PRESUPUESTO TOTAL</div><div class="presupuesto-valor">$159.341,37</div></div>
-                    <div class="presupuesto-card"><div class="presupuesto-label">EJECUTADO</div><div class="presupuesto-valor" style="color:#DB3109;">$83.178,75</div></div>
-                    <div class="presupuesto-card"><div class="presupuesto-label">POR EJECUTAR</div><div class="presupuesto-valor" style="color:#2E7D32;">$76.162,62</div></div>
-                    <div class="presupuesto-card"><div class="presupuesto-label">% EJECUCIÓN</div><div class="presupuesto-valor" style="color:#F5A623;">52,2%</div></div>
+                    <div class="presupuesto-card"><div class="presupuesto-label">EJECUTADO</div><div class="presupuesto-valor" style="color:#DB3109;">$88.471,75</div></div>
+                    <div class="presupuesto-card"><div class="presupuesto-label">POR EJECUTAR</div><div class="presupuesto-valor" style="color:#2E7D32;">$70.869,62</div></div>
+                    <div class="presupuesto-card"><div class="presupuesto-label">% EJECUCIÓN</div><div class="presupuesto-valor" style="color:#F5A623;">55,5%</div></div>
                 </div>
-                <div class="progress-bar-bg"><div class="progress-fill"></div></div>
-                <div style="text-align: center; font-size: 9px; margin-top: 4px;">$83.178,75 de $159.341,37</div>
+                <div class="progress-bar-bg"><div class="progress-fill" style="width: 55.5%;"></div></div>
+                <div style="text-align: center; font-size: 9px; margin-top: 4px;">$88.471,75 de $159.341,37</div>
             </div>
             <div class="tabla-container">
                 <h3><i class="fas fa-map-marked-alt"></i> AYUDAS POR PROVINCIA (verde↔naranja)</h3>
@@ -485,7 +527,7 @@
                     <i class="fas fa-chart-line"></i> Gráfico 1 · Ayudas Mensuales
                 </button>
                 <button class="tab-btn" data-tab="tab2">
-                    <i class="fas fa-chart-bar"></i> Gráfico 2 · Ayudas por Tipo (Invertido)
+                    <i class="fas fa-chart-bar"></i> Gráfico 2 · Ayudas por Tipo
                 </button>
             </div>
             <div class="chart-panel">
@@ -509,7 +551,7 @@
         offset: 8
     });
 
-    // DATOS
+    // DATOS ACTUALIZADOS: Se añade Ayudas Hospitalarias (44 con $5.293)
     const ayudasPorProvincia = {
         'Pichincha': 64, 'Los Ríos': 16, 'Manabí': 12, 'Guayas': 9,
         'Imbabura': 8, 'Cotopaxi': 8, 'Santo Domingo de los Tsáchilas': 8,
@@ -526,12 +568,18 @@
     };
 
     const datosMensuales = { labels: ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO'], valores: [25, 23, 45, 28, 36], montos: [9130.17, 17566.31, 16591.28, 22028.24, 17862.75] };
-    const tipoAyuda = { labels: ['Económica', 'Técnica/Medicina', 'Siniestros'], valores: [98, 40, 19], montos: [45363.68, 29564.07, 8251.00] };
+    
+    // ACTUALIZACIÓN: Nueva categoría HOSPITALARIAS con valor 44 y monto $5.293,00
+    const tipoAyuda = { 
+        labels: ['Económica', 'Técnica/Medicina', 'Siniestros', 'Hospitalarias'], 
+        valores: [97, 39, 18, 44], 
+        montos: [45363.68, 29564.07, 8251.00, 5293.00] 
+    };
+    
     const VISTA_INICIAL = { center: [-1.8, -78.2], zoom: 6.2 };
     let map, marcadores = {};
     let chartMensual, chartTipoAyuda;
 
-    // Escala de colores (verde -> naranja)
     function getColorByLoad(valor) {
         if (valor >= 30) return '#1B5E20';
         if (valor >= 16) return '#2E7D32';
@@ -640,7 +688,7 @@
             html += `<tr data-provincia="${prov}" onclick="resaltarProvincia('${prov}')" style="${estiloFila}">
                         <td style="font-weight:600;">${nombreMostrar}</td>
                         <td style="text-align:center; font-weight:bold;">${valor}</td>
-                    </tr>`;
+                     </tr>`;
         }
         html += `<tr class="total-row"><td style="text-align:center; font-weight:800;">TOTAL NACIONAL</td><td style="text-align:center; font-weight:800;">${total}</td></tr>`;
         tbody.innerHTML = html;
@@ -650,7 +698,6 @@
             ordenadas.map(([p, v]) => `<option value="${p}">${p === 'Santo Domingo de los Tsáchilas' ? 'Sto. Domingo' : p} (${v})</option>`).join('');
     }
 
-    // GRÁFICO 1: Barras ROJO, línea GRIS (original)
     function initChartMensual() {
         const ctx = document.getElementById('chartMensual').getContext('2d');
         chartMensual = new Chart(ctx, {
@@ -695,7 +742,7 @@
         });
     }
 
-    // GRÁFICO 2: Barras GRIS, línea ROJA (invertido)
+    // GRÁFICO 2 ACTUALIZADO: 4 categorías (incluye Hospitalarias)
     function initChartTipoAyuda() {
         const ctx = document.getElementById('chartTipoAyuda').getContext('2d');
         chartTipoAyuda = new Chart(ctx, {
@@ -706,7 +753,7 @@
                     { 
                         label: 'N° de Ayudas', 
                         data: tipoAyuda.valores, 
-                        backgroundColor: '#7D7877',  // GRIS para las barras
+                        backgroundColor: '#7D7877', 
                         borderRadius: 12, 
                         yAxisID: 'y', 
                         order: 2,
@@ -717,7 +764,7 @@
                         label: 'Monto (USD)', 
                         data: tipoAyuda.montos, 
                         type: 'line', 
-                        borderColor: '#DB3109',  // ROJO para la línea
+                        borderColor: '#DB3109', 
                         backgroundColor: 'transparent', 
                         borderWidth: 3,
                         pointBackgroundColor: '#DB3109', 
@@ -751,7 +798,6 @@
         });
     }
 
-    // PAGINACIÓN / TABS
     function setupTabs() {
         const tabs = document.querySelectorAll('.tab-btn');
         const canvasMensual = document.getElementById('chartMensual');
