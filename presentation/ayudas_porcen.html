@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>FUNDEBIP - Simulador de Ayudas Solidarias | Dashboard Profesional</title>
+    <!-- Leaflet CSS & JS (opcional) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', 'Roboto', system-ui, sans-serif;
+            background: linear-gradient(145deg, #f0f2f5 0%, #e2e6ea 100%);
+            padding: 20px 16px;
+        }
+
+        :root {
+            --fundebip-red: #DB3109;
+            --fundebip-red-dark: #B82A07;
+            --fundebip-gray: #7D7877;
+            --fundebip-gray-dark: #5D5A59;
+            --shadow-lg: 0 20px 40px -12px rgba(0, 0, 0, 0.15);
+            --shadow-sm: 0 6px 14px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 25px 35px -12px rgba(219, 49, 9, 0.25);
+        }
+
+        .dashboard {
+            max-width: 1800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+        }
+
+        .top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            background: linear-gradient(135deg, var(--fundebip-gray), var(--fundebip-gray-dark));
+            color: white;
+            border-radius: 28px;
+            padding: 14px 24px;
+            box-shadow: 0 14px 36px -24px rgba(0,0,0,0.4);
+            flex-wrap: wrap;
+        }
+
+        .btn-fundebip {
+            background: linear-gradient(135deg, var(--fundebip-red), var(--fundebip-red-dark));
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-fundebip:hover {
+            transform: scale(1.02);
+            box-shadow: 0 5px 12px rgba(0,0,0,0.2);
+        }
+
+        .top-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 800;
+            font-size: 1.2rem;
+        }
+
+        .kpi-superior {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 18px;
+        }
+
+        .kpi-superior-card {
+            background: white;
+            border-radius: 28px;
+            padding: 18px 12px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+            border-top: 5px solid var(--fundebip-red);
+        }
+
+        .kpi-superior-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .kpi-superior-label {
+            font-size: 13px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #2C3E50;
+            margin-bottom: 12px;
+            background: rgba(219,49,9,0.08);
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 40px;
+        }
+
+        .rango-doble {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin: 8px 0;
+        }
+        .rango-item {
+            text-align: center;
+        }
+        .rango-item .minmax-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--fundebip-gray);
+        }
+        .rango-item .minmax-valor {
+            font-size: 20px;
+            font-weight: 800;
+            color: #000;
+        }
+        
+        .porcentaje-linea {
+            margin-top: 12px;
+            font-size: 15px;
+            font-weight: 800;
+            background: #f5f5f5;
+            border-radius: 48px;
+            padding: 12px 8px;
+            display: flex;
+            justify-content: center;
+            gap: 28px;
+            align-items: baseline;
+        }
+        .porcentaje-linea span {
+            display: inline-flex;
+            align-items: baseline;
+            gap: 6px;
+            font-size: 1rem;
+        }
+        .badge-ord {
+            color: var(--fundebip-red);
+            font-weight: 900;
+            font-size: 1rem;
+        }
+        .badge-ext {
+            color: #2c5f8a;
+            font-weight: 900;
+            font-size: 1rem;
+        }
+        .porcentaje-numero {
+            font-size: 1.6rem;
+            font-weight: 900;
+            letter-spacing: -0.5px;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+            align-items: start;
+        }
+
+        .simulador-panel {
+            background: white;
+            border-radius: 32px;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            border: 1px solid rgba(125, 120, 119, 0.15);
+        }
+
+        .header-fundebip {
+            background: linear-gradient(135deg, var(--fundebip-gray-dark), var(--fundebip-gray), var(--fundebip-red));
+            color: white;
+            padding: 20px 24px;
+            text-align: center;
+        }
+
+        .header-fundebip h1 {
+            font-size: 1.6rem;
+            font-weight: 800;
+        }
+
+        .simulador-form {
+            padding: 28px 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+
+        .row-dos-columnas {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .campo {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .campo label {
+            font-weight: 800;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 32px;
+            width: fit-content;
+        }
+        .label-tipo {
+            background: #FFF1F0;
+            color: #C7362B;
+            border-left: 4px solid #DB3109;
+        }
+        .label-beneficiario {
+            background: #E9F7E1;
+            color: #2E6B2F;
+            border-left: 4px solid #3A9B3E;
+        }
+        .label-valor {
+            background: #E8F0FE;
+            color: #1E5A9C;
+            border-left: 4px solid #1E5A9C;
+        }
+        select, .valor-numero-manual {
+            padding: 14px 18px;
+            border-radius: 32px;
+            border: 1.5px solid #e2e8f0;
+            font-weight: 600;
+            font-size: 0.9rem;
+            background: #fefefe;
+            transition: all 0.2s;
+        }
+        select:focus, .valor-numero-manual:focus {
+            outline: none;
+            border-color: var(--fundebip-red);
+            box-shadow: 0 0 0 3px rgba(219,49,9,0.15);
+        }
+
+        .slider-manual-container {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .slider-wrapper {
+            flex: 3;
+            min-width: 180px;
+        }
+        .manual-input-wrapper {
+            flex: 1;
+            min-width: 150px;
+        }
+        .manual-input-wrapper input {
+            width: 100%;
+            text-align: center;
+            font-weight: 700;
+            background: #ffffff;
+            font-size: 1rem;
+            letter-spacing: 0.5px;
+        }
+        .rango-slider-container {
+            background: #f8fafc;
+            border-radius: 28px;
+            padding: 16px 20px;
+            border: 1px solid #edf2f7;
+        }
+        .slider-values {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: #e2e8f0;
+            border-radius: 10px;
+            outline: none;
+            cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            background: var(--fundebip-red-dark);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            border: 2px solid white;
+        }
+        .rango-info-detalle {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 14px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: #ffffff;
+            padding: 8px 16px;
+            border-radius: 40px;
+            border: 1px solid #e9eef3;
+        }
+
+        /* TARJETA REDISEÑADA: BORDE COLOR PLOMO (FUNDEBIP), MONTO AZUL/VERDE, PORCENTAJE AZUL */
+        .resultado-card-derecho {
+            background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+            margin: 20px 20px 0 20px;
+            border-radius: 36px;
+            padding: 28px 20px;
+            text-align: center;
+            box-shadow: 0 15px 35px -12px rgba(0, 0, 0, 0.1);
+            border: 2px solid #7D7877;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .resultado-card-derecho::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(125,120,119,0.05) 0%, rgba(0,0,0,0) 70%);
+            pointer-events: none;
+        }
+        .resultado-card-derecho:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px -12px rgba(125,120,119,0.3);
+            border-color: #5D5A59;
+        }
+        .resultado-label-grande {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: 800;
+            color: #5D5A59;
+            background: rgba(93,90,89,0.1);
+            display: inline-block;
+            padding: 6px 18px;
+            border-radius: 60px;
+        }
+        /* MONTO EN COLOR AZUL/VERDE DEGRADADO */
+        .resultado-monto {
+            font-size: 3.4rem;
+            font-weight: 900;
+            margin: 16px 0;
+            background: linear-gradient(135deg, #0F5B8C, #1B8C6F, #2E9C4A);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 8px rgba(15,91,140,0.15);
+            letter-spacing: -1px;
+        }
+        .detalle-calculo-moderno {
+            background: #F1F5F9;
+            border-radius: 60px;
+            padding: 12px 16px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #1E293B;
+            border: 1px solid #E2E8F0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        /* PORCENTAJE EN AZUL VIBRANTE */
+        .badge-porcentaje {
+            background: linear-gradient(135deg, #1E5A9C, #2E7D8C);
+            color: white;
+            padding: 4px 14px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 8px rgba(30,90,156,0.3);
+        }
+        .badge-porcentaje i {
+            font-size: 0.7rem;
+        }
+        .detalle-texto {
+            font-weight: 600;
+            color: #334155;
+        }
+        .detalle-texto strong {
+            background: linear-gradient(135deg, #0F5B8C, #1B8C6F);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 900;
+        }
+
+        .info-panel-derecho {
+            background: white;
+            border-radius: 32px;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            border: 1px solid rgba(125, 120, 119, 0.15);
+            display: flex;
+            flex-direction: column;
+        }
+        .info-header {
+            background: linear-gradient(135deg, var(--fundebip-gray-dark), #4a4746);
+            color: white;
+            padding: 16px 20px;
+            text-align: center;
+        }
+        .info-header h3 {
+            font-size: 1.2rem;
+            font-weight: 800;
+        }
+        
+        .ultimas-simulaciones {
+            padding: 20px;
+            flex: 1;
+            max-height: 340px;
+            overflow-y: auto;
+        }
+        .simulacion-item {
+            background: #f8fafc;
+            border-radius: 24px;
+            padding: 14px 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--fundebip-red);
+        }
+        .detalle-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            margin-top: 8px;
+            color: #334155;
+        }
+        .footer-nota {
+            background: var(--fundebip-gray-dark);
+            color: rgba(255,255,255,0.8);
+            text-align: center;
+            padding: 10px;
+            font-size: 0.7rem;
+        }
+        .registro-btn-derecho {
+            margin: 8px 20px 20px 20px;
+            background: linear-gradient(135deg, #2c3e50, #1a2a3a);
+            justify-content: center;
+        }
+
+        @media (max-width: 1100px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+            .kpi-superior {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .row-dos-columnas {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            .slider-manual-container {
+                flex-direction: column;
+            }
+            .slider-wrapper, .manual-input-wrapper {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <div class="top-bar">
+        <div class="top-title">
+            <i class="fas fa-hand-holding-heart" style="font-size: 2rem;"></i>
+            <span>FUNDEBIP · SIMULADOR DE AYUDAS SOLIDARIAS</span>
+        </div>
+    </div>
+
+    <div class="kpi-superior">
+        <div class="kpi-superior-card">
+            <div class="kpi-superior-label"><i class="fas fa-chart-line"></i> AYUDA ORDINARIA</div>
+            <div class="rango-doble">
+                <div class="rango-item"><div class="minmax-label">MÍN</div><div class="minmax-valor">$1.205,00</div></div>
+                <div class="rango-item"><div class="minmax-label">MÁX</div><div class="minmax-valor">$2.892,00</div></div>
+            </div>
+        </div>
+        <div class="kpi-superior-card">
+            <div class="kpi-superior-label"><i class="fas fa-bolt"></i> AYUDA EXTRAORDINARIA</div>
+            <div class="rango-doble">
+                <div class="rango-item"><div class="minmax-label">MÍN</div><div class="minmax-valor">$1.205,00</div></div>
+                <div class="rango-item"><div class="minmax-label">MÁX</div><div class="minmax-valor">$3.374,00</div></div>
+            </div>
+        </div>
+        <div class="kpi-superior-card">
+            <div class="kpi-superior-label"><i class="fas fa-user-shield"></i> SERVIDOR POLICIAL</div>
+            <div class="porcentaje-linea">
+                <span><span class="badge-ord">Ord.</span> <span class="porcentaje-numero">20%</span></span>
+                <span><span class="badge-ext">Ext.</span> <span class="porcentaje-numero">40%</span></span>
+            </div>
+        </div>
+        <div class="kpi-superior-card">
+            <div class="kpi-superior-label"><i class="fas fa-family"></i> ESPOSA E HIJOS</div>
+            <div class="porcentaje-linea">
+                <span><span class="badge-ord">Ord.</span> <span class="porcentaje-numero">15%</span></span>
+                <span><span class="badge-ext">Ext.</span> <span class="porcentaje-numero">30%</span></span>
+            </div>
+        </div>
+        <div class="kpi-superior-card">
+            <div class="kpi-superior-label"><i class="fas fa-heart"></i> PADRE O MADRE</div>
+            <div class="porcentaje-linea">
+                <span><span class="badge-ord">Ord.</span> <span class="porcentaje-numero">10%</span></span>
+                <span><span class="badge-ext">Ext.</span> <span class="porcentaje-numero">15%</span></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <div class="simulador-panel">
+            <div class="header-fundebip">
+                <h1><i class="fas fa-calculator"></i> Simulador de Ayudas</h1>
+                <h2>Seleccione tipo, valor y beneficiario</h2>
+            </div>
+            <div class="simulador-form">
+                <div class="row-dos-columnas">
+                    <div class="campo">
+                        <label class="label-tipo"><i class="fas fa-chart-pie"></i> Tipo de Ayuda</label>
+                        <select id="tipoAyudaSelect">
+                            <option value="ordinaria">AYUDA ORDINARIA (Mín $1.205 - Máx $2.892)</option>
+                            <option value="extraordinaria">AYUDA EXTRAORDINARIA (Mín $1.205 - Máx $3.374)</option>
+                        </select>
+                    </div>
+                    <div class="campo">
+                        <label class="label-beneficiario"><i class="fas fa-users"></i> Beneficiario</label>
+                        <select id="beneficiarioSelect">
+                            <option value="servidor">SERVIDOR POLICIAL</option>
+                            <option value="esposa_hijos">ESPOSA E HIJOS</option>
+                            <option value="mama_papa">PADRE O MADRE</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="campo">
+                    <label class="label-valor"><i class="fas fa-dollar-sign"></i> Valor de la ayuda (dentro del rango)</label>
+                    <div class="rango-slider-container">
+                        <div class="slider-values">
+                            <span id="minRangoLabel">$1.205,00</span>
+                            <span id="maxRangoLabel">$2.892,00</span>
+                        </div>
+                        <div class="slider-manual-container">
+                            <div class="slider-wrapper">
+                                <input type="range" id="rangoSlider" min="1205" max="2892" step="0.01" value="1980">
+                            </div>
+                            <div class="manual-input-wrapper">
+                                <input type="text" id="manualValorInput" class="valor-numero-manual" value="1980" placeholder="Ej: 2500.50">
+                            </div>
+                        </div>
+                        <div class="rango-info-detalle">
+                            <span><i class="fas fa-arrow-left"></i> Mínimo</span>
+                            <span><strong id="valorSeleccionadoFormato">$1.980,00</strong></span>
+                            <span>Máximo <i class="fas fa-arrow-right"></i></span>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn-fundebip registro-btn-derecho" id="btnRegistrarSimulacionLeft" style="margin: 0;">
+                    <i class="fas fa-save"></i> Registrar simulación
+                </button>
+            </div>
+        </div>
+
+        <div class="info-panel-derecho">
+            <div class="info-header">
+                <h3><i class="fas fa-chart-line"></i> Resumen de ayuda</h3>
+            </div>
+            <!-- TARJETA CON BORDE PLOMO Y MONTO AZUL/VERDE -->
+            <div class="resultado-card-derecho" id="resultadoCardPrincipal">
+                <div class="resultado-label-grande"><i class="fas fa-hand-holding-usd"></i> MONTO DE LA AYUDA (APORTE FUNDEBIP)</div>
+                <div class="resultado-monto" id="montoFinal">$0,00</div>
+                <div class="detalle-calculo-moderno" id="detalleCalculoModerno">
+                    <span class="detalle-texto">Base: $0,00</span>
+                    <span class="detalle-texto">|</span>
+                    <span class="detalle-texto">Ordinaria · Servidor Policial</span>
+                    <span class="badge-porcentaje"><i class="fas fa-percent"></i> 20%</span>
+                    <span class="detalle-texto">= <strong>$0,00</strong></span>
+                </div>
+            </div>
+            <div style="padding: 0 20px; margin-top: 16px;">
+                <div style="font-weight:800; font-size:0.8rem; margin-bottom: 8px;"><i class="fas fa-history"></i> Últimas ayudas registradas</div>
+            </div>
+            <div class="ultimas-simulaciones" id="listaSimulacionesContainer">
+                <div style="text-align:center; color:#aaa; padding:20px;">--- Sin registros aún ---</div>
+            </div>
+            <div class="footer-nota">
+                <i class="fas fa-chart-simple"></i> Cada registro refleja el cálculo actual
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const RANGOS = {
+        ordinaria: { min: 1205, max: 2892 },
+        extraordinaria: { min: 1205, max: 3374 }
+    };
+    const PORCENTAJES = {
+        ordinaria: { servidor: 0.20, esposa_hijos: 0.15, mama_papa: 0.10 },
+        extraordinaria: { servidor: 0.40, esposa_hijos: 0.30, mama_papa: 0.15 }
+    };
+
+    const tipoSelect = document.getElementById('tipoAyudaSelect');
+    const rangoSlider = document.getElementById('rangoSlider');
+    const manualValorInput = document.getElementById('manualValorInput');
+    const beneficiarioSelect = document.getElementById('beneficiarioSelect');
+    const montoFinalSpan = document.getElementById('montoFinal');
+    const detalleCalculoModerno = document.getElementById('detalleCalculoModerno');
+    const btnRegistrarLeft = document.getElementById('btnRegistrarSimulacionLeft');
+    const minRangoLabel = document.getElementById('minRangoLabel');
+    const maxRangoLabel = document.getElementById('maxRangoLabel');
+    const valorSeleccionadoFormato = document.getElementById('valorSeleccionadoFormato');
+    const listaSimulacionesContainer = document.getElementById('listaSimulacionesContainer');
+
+    let historialSimulaciones = [];
+
+    function formatearNumero(valor) {
+        return valor.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function parseNumeroInput(valorStr) {
+        let limpio = valorStr.trim().replace(',', '.');
+        let num = parseFloat(limpio);
+        return isNaN(num) ? null : num;
+    }
+
+    function actualizarColorSlider() {
+        const valor = parseFloat(rangoSlider.value);
+        const min = parseFloat(rangoSlider.min);
+        const max = parseFloat(rangoSlider.max);
+        const porcentaje = ((valor - min) / (max - min)) * 100;
+        const colorFinal = `linear-gradient(90deg, #DB3109 0%, #B82A07 ${porcentaje}%, #e2e8f0 ${porcentaje}%, #e2e8f0 100%)`;
+        rangoSlider.style.background = colorFinal;
+    }
+
+    function sincronizarValor(valor) {
+        const tipo = tipoSelect.value;
+        const rango = RANGOS[tipo];
+        let nuevoValor = typeof valor === 'number' ? valor : parseFloat(valor);
+        
+        if (isNaN(nuevoValor)) {
+            nuevoValor = rango.min;
+        }
+        
+        nuevoValor = Math.min(rango.max, Math.max(rango.min, nuevoValor));
+        
+        rangoSlider.value = nuevoValor;
+        manualValorInput.value = nuevoValor;
+        valorSeleccionadoFormato.innerText = `$${formatearNumero(nuevoValor)}`;
+        actualizarColorSlider();
+        calcularMonto();
+    }
+
+    function actualizarRangosYSlider() {
+        const tipo = tipoSelect.value;
+        const rango = RANGOS[tipo];
+        rangoSlider.min = rango.min;
+        rangoSlider.max = rango.max;
+        rangoSlider.step = 0.01;
+        
+        let currentVal = parseFloat(rangoSlider.value);
+        if (isNaN(currentVal)) currentVal = rango.min;
+        if (currentVal < rango.min) currentVal = rango.min;
+        if (currentVal > rango.max) currentVal = rango.max;
+        
+        rangoSlider.value = currentVal;
+        manualValorInput.value = currentVal;
+        
+        minRangoLabel.innerText = `$${formatearNumero(rango.min)}`;
+        maxRangoLabel.innerText = `$${formatearNumero(rango.max)}`;
+        valorSeleccionadoFormato.innerText = `$${formatearNumero(currentVal)}`;
+        
+        actualizarColorSlider();
+        calcularMonto();
+    }
+
+    function calcularMonto() {
+        const tipo = tipoSelect.value;
+        let beneficiarioKey = beneficiarioSelect.value;
+        let valorBase = parseFloat(rangoSlider.value);
+        const rango = RANGOS[tipo];
+        if (valorBase > rango.max) valorBase = rango.max;
+        if (valorBase < rango.min) valorBase = rango.min;
+        
+        const porcentaje = PORCENTAJES[tipo][beneficiarioKey];
+        const monto = valorBase * porcentaje;
+        
+        let beneficiarioTexto = "";
+        if (beneficiarioKey === 'servidor') beneficiarioTexto = "Servidor Policial";
+        else if (beneficiarioKey === 'esposa_hijos') beneficiarioTexto = "Esposa e Hijos";
+        else beneficiarioTexto = "Padre o Madre";
+        
+        let tipoTexto = tipo === 'ordinaria' ? "Ordinaria" : "Extraordinaria";
+        const porcentajeMostrar = (porcentaje * 100).toFixed(0);
+        
+        const montoFormateado = formatearNumero(monto);
+        const baseFormateada = formatearNumero(valorBase);
+        montoFinalSpan.innerText = `$${montoFormateado}`;
+        
+        detalleCalculoModerno.innerHTML = `
+            <span class="detalle-texto">Base: $${baseFormateada}</span>
+            <span class="detalle-texto">|</span>
+            <span class="detalle-texto">${tipoTexto} · ${beneficiarioTexto}</span>
+            <span class="badge-porcentaje"><i class="fas fa-percent"></i> ${porcentajeMostrar}%</span>
+            <span class="detalle-texto">= <strong>$${montoFormateado}</strong></span>
+        `;
+        
+        return { monto, valorBase, tipo, beneficiarioKey, tipoTexto, beneficiarioTexto, porcentajeMostrar };
+    }
+
+    function registrarSimulacion() {
+        const calc = calcularMonto();
+        const ahora = new Date();
+        const hora = `${ahora.getHours().toString().padStart(2,'0')}:${ahora.getMinutes().toString().padStart(2,'0')}:${ahora.getSeconds().toString().padStart(2,'0')}`;
+        
+        const registro = {
+            tipo: calc.tipoTexto,
+            beneficiario: calc.beneficiarioTexto,
+            valorBase: calc.valorBase,
+            monto: calc.monto,
+            porcentaje: calc.porcentajeMostrar,
+            timestamp: hora
+        };
+        
+        historialSimulaciones.unshift(registro);
+        if (historialSimulaciones.length > 6) historialSimulaciones.pop();
+        actualizarListaSimulaciones();
+        
+        const originalText = btnRegistrarLeft.innerHTML;
+        btnRegistrarLeft.innerHTML = '<i class="fas fa-check-circle"></i> ¡Registrado!';
+        setTimeout(() => {
+            btnRegistrarLeft.innerHTML = originalText;
+        }, 1200);
+    }
+    
+    function actualizarListaSimulaciones() {
+        if (historialSimulaciones.length === 0) {
+            listaSimulacionesContainer.innerHTML = '<div style="text-align:center; color:#aaa; padding:20px;">--- Sin registros aún ---</div>';
+            return;
+        }
+        let html = '';
+        for (let i = 0; i < historialSimulaciones.length; i++) {
+            const s = historialSimulaciones[i];
+            html += `
+                <div class="simulacion-item">
+                    <div><i class="fas fa-receipt"></i> <strong>${s.tipo}</strong> · ${s.beneficiario}</div>
+                    <div class="detalle-row">
+                        <span>Base: $${formatearNumero(s.valorBase)}</span>
+                        <span>${s.porcentaje}% → <strong style="color:#0F5B8C;">$${formatearNumero(s.monto)}</strong></span>
+                        <span><i class="far fa-clock"></i> ${s.timestamp}</span>
+                    </div>
+                </div>
+            `;
+        }
+        listaSimulacionesContainer.innerHTML = html;
+    }
+
+    tipoSelect.addEventListener('change', () => {
+        actualizarRangosYSlider();
+    });
+    
+    rangoSlider.addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        sincronizarValor(val);
+    });
+    
+    manualValorInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            let val = parseNumeroInput(manualValorInput.value);
+            if (val !== null) {
+                sincronizarValor(val);
+            } else {
+                sincronizarValor(rangoSlider.value);
+            }
+            manualValorInput.blur();
+        }
+    });
+    
+    manualValorInput.addEventListener('blur', () => {
+        let val = parseNumeroInput(manualValorInput.value);
+        if (val !== null) {
+            sincronizarValor(val);
+        } else {
+            sincronizarValor(rangoSlider.value);
+        }
+    });
+    
+    beneficiarioSelect.addEventListener('change', () => calcularMonto());
+    btnRegistrarLeft.addEventListener('click', registrarSimulacion);
+    
+    function init() {
+        actualizarRangosYSlider();
+        historialSimulaciones = [];
+        actualizarListaSimulaciones();
+    }
+    init();
+</script>
+</body>
+</html>
